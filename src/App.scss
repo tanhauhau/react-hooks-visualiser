@@ -1,0 +1,16 @@
+:local {
+  .app {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+  }
+  .leftPanel {
+    flex: 1;
+    flex-basis: 50%;
+  }
+  .rightPanel {
+    flex: 1;
+    flex-basis: 50%;
+  }
+}
+
