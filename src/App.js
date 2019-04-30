@@ -1,7 +1,7 @@
 // @flow
 
 import React from 'react';
-import styles from './App.scss';
+import styles from './App.module.scss';
 import useBabel from './utils/useBabel';
 import Editor from './components/Editor';
 console.log(styles);
@@ -13,6 +13,7 @@ function App() {
       <div className={styles.leftPanel}>
         <Editor code={code} onCodeChange={onCodeChange} />
       </div>
+      <div className={styles.rightPanel}></div>
     </div>
   );
 }
