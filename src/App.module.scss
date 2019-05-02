@@ -14,3 +14,9 @@
   }
 }
 
+:global {
+  .highlight-marker {
+    position: absolute;
+    background: yellow;
+  }
+}

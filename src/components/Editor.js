@@ -8,7 +8,7 @@ type PropTypes = {
   code: string,
   onCodeChange: string => void,
 };
-export default function Editor({ code, onCodeChange }: PropTypes) {
+export default function Editor({ code, onCodeChange, marker }: PropTypes) {
   return (
     <AceEditor
       mode="javascript"
@@ -21,7 +21,7 @@ export default function Editor({ code, onCodeChange }: PropTypes) {
       showPrintMargin={false}
       editorProps={{ $blockScrolling: true }}
       setOptions={{ useWorker: false }}
-      // markers={marker}
+      markers={marker}
       // onCursorChange={onCursorChange}
     />
   );

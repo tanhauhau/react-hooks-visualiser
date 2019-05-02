@@ -6,14 +6,25 @@ export default class Hook {
     this.hookPointer = -1;
   }
 
+  setDispatch(dispatch) {
+    this.dispatch = dispatch;
+  }
+
   addUseState(initialState) {
     this.hookPointer++;
     const state = initialState;
-    const setState = value => this.updateHook(this.hookPointer, value);
+    const setState = (value) => {
+      this.dispatch({
+        type: 'updateHook',
+        hookType: 'useState',
+        hookIndex: this.hookPointer,
+        data: { value },
+      });
+    };
     this.hooks.push({
       type: 'useState',
       state,
-      setState
+      setState,
     });
     return [state, setState];
   }

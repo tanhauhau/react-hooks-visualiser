@@ -1,28 +1,32 @@
 // @flow
 /* eslint-disable no-new-func, no-loop-func */
-import { useReducer } from 'react';
-import { generate } from './babel';
-import { identifier } from '@babel/types';
+import React, { useReducer } from 'react';
+import ReactDOM from 'react-dom';
+import * as babel from './babel';
 import Hook from './hook';
-
-type State = {|
+type Location = {
+  line: number,
+  column: number,
+};
+export type State = {|
   status: 'ready' | 'running' | 'pause',
   componentName: string,
   hooks: Hook,
   scope: {},
-  props: {}
+  props: {},
+  statementAt: ?{ start: Location, end: Location },
 |};
 
 type Action =
   | {|
       type: 'start',
-      ast: Object
+      ast: Object,
     |}
   | {|
-      type: 'stop'
+      type: 'stop',
     |}
   | {|
-      type: 'pause'
+      type: 'pause',
     |}
   | {||};
 
@@ -39,7 +43,7 @@ function codeRunnerReducer(state: State, action: Action): State {
         props: keysToObjects(propNames),
         scope,
         statements,
-        statementIndex: -1
+        statementIndex: -1,
       };
     }
     case 'next': {
@@ -49,18 +53,29 @@ function codeRunnerReducer(state: State, action: Action): State {
           : state.statements[state.statementIndex].next;
       const nextStatement = state.statements[nextStatementIndex];
       console.log('nextStatement', nextStatementIndex, nextStatement);
-      const { scope, hooks } = executeStatement(
-        nextStatement.statement,
-        state.scope,
-        state.hooks
-      );
+
+      let statementAt = null;
+      let { scope, hooks } = state;
+
+      if (nextStatementIndex > -1) {
+        statementAt = nextStatement.statement.loc;
+        ({ scope, hooks } = executeStatement(
+          nextStatement.statement,
+          scope,
+          hooks
+        ));
+      }
+
       return {
         ...state,
         statementIndex: nextStatementIndex,
+        statementAt,
         scope,
-        hooks
+        hooks,
       };
     }
+    case 'updateHook': 
+      console.log(action);
     default:
       return state;
   }
@@ -71,11 +86,13 @@ const initialState: State = {
   componentName: '',
   hooks: new Hook(),
   scope: {},
-  props: {}
+  props: {},
+  statementAt: null,
 };
 
 export default function useCodeRunner(): [State, (Action) => void] {
   const [state, dispatch] = useReducer(codeRunnerReducer, initialState);
+  state.hooks.setDispatch(dispatch);
   return [state, dispatch];
 }
 
@@ -90,12 +107,11 @@ function analyseCode(ast) {
       componentFunction.params[0].type === 'ObjectPattern'
         ? keysToObjects(propNames)
         : {};
-
     return {
       componentName,
       propNames,
       statements,
-      scope
+      scope,
     };
   }
   return null;
@@ -160,16 +176,17 @@ function flattenStatements(statements) {
         statement.declarations.forEach(declaration =>
           result.push({
             statement: declaration,
-            next: ++i
+            next: ++i,
           })
         );
         break;
       case 'ReturnStatement':
         result.push({
           statement,
-          next: -1 // end
+          next: -1, // end
         });
         break;
+      // TODO: handle if else
       default:
     }
   }
@@ -200,6 +217,12 @@ function executeStatement(statement, scope, hooks: Hook) {
       }
       break;
     }
+    case 'ReturnStatement':
+      ReactDOM.render(
+        evaluateExpression(statement.argument, nextScope, nextHook),
+        document.querySelector('#render-here')
+      );
+      break;
     default:
   }
   return { scope: nextScope, hooks: nextHook };
@@ -212,16 +235,28 @@ function evaluateExpression(ast, scope, hook: Hook) {
     case 'BooleanLiteral':
     case 'ArrayExpression':
     case 'ObjectExpression':
-      return Function(
-        `{${Object.keys(scope).join(',')}}`,
-        'return ' + generate(ast).code
-      )(scope);
+      return dangerousEvalWithScope(babel.generate(ast).code, scope);
     case 'CallExpression':
-      if (ast.callee.name === 'useState') {
-        const args = evaluateExpression(ast.arguments, scope, hook);
-        return hook.addUseState(...args);
+      if (ast.callee.type === 'Identifier') {
+        if (ast.callee.name === 'useState') {
+          let initialState = undefined;
+          if (ast.arguments.length > 0) {
+            initialState = evaluateExpression(ast.arguments[0], scope, hook);
+          }
+          return hook.addUseState(initialState);
+        }
+      } else {
+        return dangerousEvalWithScope(babel.generate(ast).code, scope);
       }
       return [];
     default:
   }
+}
+
+function dangerousEvalWithScope(code, scope) {
+  return Function(
+    'React',
+    `{${Object.keys(scope).join(',')}}`,
+    `return ${code}`
+  )(React, scope);
 }
