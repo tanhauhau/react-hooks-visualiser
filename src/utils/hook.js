@@ -22,20 +22,29 @@ export default class Hook {
         type: 'updateHook',
         hookType: 'useState',
         hookIndex: this.hookPointer,
-        data: { value },
+        data: { value }
       });
     };
     this.hooks.push({
       type: 'useState',
       state,
-      setState,
+      setState
     });
     return [state, setState];
   }
 
   updateSetState(hookIndex, newValue) {
     const hook = this.hooks[hookIndex];
-    hook.state = newValue;
+    let nextState;
+    if (typeof newValue === 'function') {
+      nextState = newValue(hook.state);
+    } else {
+      nextState = newValue;
+    }
+    this.hooks[hookIndex] = {
+      ...hook,
+      state: nextState
+    };
   }
 
   clone() {

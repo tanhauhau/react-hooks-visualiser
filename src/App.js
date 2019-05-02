@@ -30,6 +30,7 @@ export default function MyCounter({ foo }) {
   return (
     <div>
       <button onClick={() => setCount(count + 1)}>Click</button>
+      <button onClick={() => setCount(count => count + 1)}>Click</button>
       <div>{count}</div>
     </div>
   )
