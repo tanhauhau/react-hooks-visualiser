@@ -12,8 +12,12 @@ export default class Hook {
 
   addUseState(initialState) {
     this.hookPointer++;
+    if (this.hooks[this.hookPointer] !== undefined) {
+      const { state, setState } = this.hooks[this.hookPointer];
+      return [state, setState];
+    }
     const state = initialState;
-    const setState = (value) => {
+    const setState = value => {
       this.dispatch({
         type: 'updateHook',
         hookType: 'useState',
@@ -29,14 +33,9 @@ export default class Hook {
     return [state, setState];
   }
 
-  updateHook(hookIndex, ...args) {
+  updateSetState(hookIndex, newValue) {
     const hook = this.hooks[hookIndex];
-    switch (hook.type) {
-      case 'useState':
-        hook.state = args[0];
-        break;
-      default:
-    }
+    hook.state = newValue;
   }
 
   clone() {

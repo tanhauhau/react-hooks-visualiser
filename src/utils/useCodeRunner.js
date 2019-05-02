@@ -74,8 +74,19 @@ function codeRunnerReducer(state: State, action: Action): State {
         hooks,
       };
     }
-    case 'updateHook': 
-      console.log(action);
+    case 'updateHook':
+      const newHook = state.hooks.clone();
+      console.log(action, action.hookType);
+      switch (action.hookType) {
+        case 'useState':
+          newHook.updateSetState(action.hookIndex, action.data.value);
+          break;
+        default:
+      }
+      return {
+        ...state,
+        hooks: newHook,
+      };
     default:
       return state;
   }
@@ -222,6 +233,7 @@ function executeStatement(statement, scope, hooks: Hook) {
         evaluateExpression(statement.argument, nextScope, nextHook),
         document.querySelector('#render-here')
       );
+      nextHook.hookPointer = -1;
       break;
     default:
   }

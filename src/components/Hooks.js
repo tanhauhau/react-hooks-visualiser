@@ -22,30 +22,36 @@ const HookTitleDiv = styled.div`
 const HookBody = styled.div`
   padding: 4px;
 `;
+const HookArrow = styled.div`
+  color: forestgreen;
+`;
 
 export default function Hooks({ hook }) {
   const { hooks, hookPointer } = hook;
   return (
     <HooksContainer>
-      {hooks.map(hook => {
+      {hooks.map((hook, index) => {
         switch (hook.type) {
           case 'useState':
             return (
-              <HookDiv>
-                <HookTitleDiv>useState</HookTitleDiv>
-                <HookBody>
-                  <Table>
-                    <TableHeader>state</TableHeader>
-                    <TableData>
-                      <Data data={hook.state} />
-                    </TableData>
-                    <TableHeader>setState</TableHeader>
-                    <TableData>
-                      <FunctionHover fn={hook.setState} />
-                    </TableData>
-                  </Table>
-                </HookBody>
-              </HookDiv>
+              <>
+                {index > 0 ? <HookArrow> ⇣ </HookArrow> : null}
+                <HookDiv>
+                  <HookTitleDiv>useState</HookTitleDiv>
+                  <HookBody>
+                    <Table>
+                      <TableHeader>state</TableHeader>
+                      <TableData>
+                        <Data data={hook.state} />
+                      </TableData>
+                      <TableHeader>setState</TableHeader>
+                      <TableData>
+                        <FunctionHover fn={hook.setState} />
+                      </TableData>
+                    </Table>
+                  </HookBody>
+                </HookDiv>
+              </>
             );
           default:
             return null;
