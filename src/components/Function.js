@@ -1,5 +1,6 @@
 import React, { useContext, useReducer, useEffect } from 'react';
 import styled from 'styled-components';
+import randomcolor from 'randomcolor';
 
 const DispatchContext = React.createContext();
 const StateContext = React.createContext();
@@ -7,22 +8,24 @@ const StateContext = React.createContext();
 const map = new WeakMap();
 let index = 0;
 
+function ensureMap(fn) {
+  if (!map.has(fn)) {
+    map.set(fn, index++);
+  }
+  return map.get(fn);
+}
+
 const reducer = (state, action) => {
   switch (action.type) {
-    case 'create':
-      if (!map.has(action.data)) {
-        map.set(action.data, index++);
-      }
-      return state;
     case 'hover':
       return {
         ...state,
-        [map.get(action.data)]: true,
+        [map.get(action.data)]: true
       };
     case 'unhover':
       return {
         ...state,
-        [map.get(action.data)]: false,
+        [map.get(action.data)]: false
       };
     default:
       return state;
@@ -41,24 +44,22 @@ export function FunctionHoverProvider({ children }) {
 }
 
 const HoverDiv = styled.div`
-  padding: 4px 8px;
-  color: ${props => (props.highlight ? 'white' : '#8b679b')};
-  background: ${props => (props.highlight ? '#8b679b' : 'transparent')};
+  color: ${props => (props.highlight ? 'white' : props.color)};
+  background: ${props => (props.highlight ? props.color : 'transparent')};
   display: inline-block;
   cursor: pointer;
-  border-radius: 4px;
 `;
 
 export function FunctionHover({ fn }) {
   const state = useContext(StateContext);
   const dispatch = useContext(DispatchContext);
-  useEffect(() => {
-    dispatch({ type: 'create', data: fn });
-  }, [fn, dispatch]);
+
+  const fnIndex = ensureMap(fn);
 
   return (
     <HoverDiv
-      highlight={state[map.get(fn)]}
+      color={randomcolor({ luminosity: 'dark', seed: fnIndex * 10 })}
+      highlight={state[fnIndex]}
       onMouseEnter={() => dispatch({ type: 'hover', data: fn })}
       onMouseLeave={() => dispatch({ type: 'unhover', data: fn })}
     >
