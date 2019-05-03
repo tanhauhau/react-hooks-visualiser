@@ -170,6 +170,16 @@ function getProps(ast) {
   return [];
 }
 
+function evalRestOfCodeIntoScope(ast) {
+  const otherCodes = ast.program.body.filter(
+    node => node.type !== 'ExportDefaultDeclaration'
+  );
+  const scope = {};
+  for (const otherCode of otherCodes) {
+  }
+  return scope;
+}
+
 // TODO: infer props via referenced object type
 // function findReferencedStatements(identifierName, statements) {
 //   const redeclared =
