@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, TableHeader, TableData } from './Table';
-import Data from './Data';
+import { ObjectHover } from './ObjectHover';
 
 export default function Props({ props, onPropsChange }) {
   return (
@@ -38,7 +38,7 @@ function ContentEditable({ value, onChange }) {
         }
       }}
     >
-      <Data data={value} />
+      <ObjectHover data={value} />
     </div>
   );
 }

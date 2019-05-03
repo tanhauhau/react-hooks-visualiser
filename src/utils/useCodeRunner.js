@@ -4,6 +4,8 @@ import React, { useReducer } from 'react';
 import ReactDOM from 'react-dom';
 import * as babel from './babel';
 import Hook from './hook';
+import ProxyObject from './ProxyObject';
+
 type Location = {
   line: number,
   column: number
@@ -93,7 +95,7 @@ function codeRunnerReducer(state: State, action): State {
         ...state,
         props: {
           ...state.props,
-          [action.key]: action.value
+          [action.key]: new ProxyObject(action.value),
         },
         isComponentDirty: true,
       };
@@ -220,7 +222,7 @@ function flattenStatements(statements) {
 function keysToObjects(keys) {
   const result = {};
   for (const key of keys) {
-    result[key] = null;
+    result[key] = new ProxyObject(null);
   }
   return result;
 }
@@ -241,7 +243,7 @@ function executeStatement(statement, nextScope, nextHook: Hook) {
     }
     case 'ReturnStatement':
       ReactDOM.render(
-        evaluateExpression(statement.argument, nextScope, nextHook),
+        evaluateExpression(statement.argument, nextScope, nextHook).getValue(),
         document.querySelector('#render-here')
       );
       nextHook.hookPointer = -1;
@@ -258,7 +260,7 @@ function evaluateExpression(ast, scope, hook: Hook) {
     case 'BooleanLiteral':
     case 'ArrayExpression':
     case 'ObjectExpression':
-      return dangerousEvalWithScope(babel.generate(ast).code, scope);
+      return new ProxyObject(dangerousEvalWithScope(babel.generate(ast).code, scope));
     case 'CallExpression':
       if (ast.callee.type === 'Identifier') {
         if (ast.callee.name === 'useState') {
@@ -269,7 +271,7 @@ function evaluateExpression(ast, scope, hook: Hook) {
           return hook.addUseState(initialState);
         }
       } else {
-        return dangerousEvalWithScope(babel.generate(ast).code, scope);
+        return new ProxyObject(dangerousEvalWithScope(babel.generate(ast).code, scope));
       }
       return [];
     default:
@@ -281,5 +283,16 @@ function dangerousEvalWithScope(code, scope) {
     'React',
     `{${Object.keys(scope).join(',')}}`,
     `return ${code}`
-  )(React, scope);
+  )(React, deproxy(scope));
+}
+
+function deproxy(obj) {
+  return Object.keys(obj).reduce((result, key) => {
+    if (obj[key] instanceof ProxyObject) {
+      result[key] = obj[key].getValue();
+    } else {
+      result[key] = obj[key];
+    }
+    return result;
+  }, {});
 }

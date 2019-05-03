@@ -37,9 +37,9 @@ export default class Hook {
     const hook = this.hooks[hookIndex];
     let nextState;
     if (typeof newValue === 'function') {
-      nextState = newValue(hook.state);
+      nextState = hook.state.setValue(newValue(hook.state.getValue()));
     } else {
-      nextState = newValue;
+      nextState = hook.state.setValue(newValue);
     }
     this.hooks[hookIndex] = {
       ...hook,

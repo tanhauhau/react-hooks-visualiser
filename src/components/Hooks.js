@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { ObjectHover } from './ObjectHover';
-import Data from './Data';
 import { Table, TableHeader, TableData } from './Table';
 
 const HooksContainer = styled.div`
@@ -51,7 +50,7 @@ export default function Hooks({ hook }) {
                 <Table>
                   <TableHeader>state</TableHeader>
                   <TableData>
-                    <Data data={hook.state} />
+                    <ObjectHover data={hook.state} />
                   </TableData>
                   <TableHeader>setState</TableHeader>
                   <TableData>
