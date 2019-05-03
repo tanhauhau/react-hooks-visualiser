@@ -22,15 +22,22 @@ export default function Props({ props, onPropsChange }) {
 
 function ContentEditable({ value, onChange }) {
   const onInput = e => {
-    onChange(tryParse(e.target.innerHTML));
+    const newValue = tryParse(e.target.innerHTML);
+    if (newValue !== value) {
+      onChange(newValue);
+    }
   };
   return (
-    <div contentEditable={true} onBlur={onInput} onKeyDown={(e) => {
-      if (e.keyCode === 13) {
-        e.preventDefault();
-        e.target.blur();
-      }
-    }}>
+    <div
+      contentEditable={true}
+      onBlur={onInput}
+      onKeyDown={e => {
+        if (e.keyCode === 13) {
+          e.preventDefault();
+          e.target.blur();
+        }
+      }}
+    >
       <Data data={value} />
     </div>
   );
