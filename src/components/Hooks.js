@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FunctionHover } from './Function';
+import { ObjectHover } from './ObjectHover';
 import Data from './Data';
 import { Table, TableHeader, TableData } from './Table';
 
@@ -55,7 +55,7 @@ export default function Hooks({ hook }) {
                   </TableData>
                   <TableHeader>setState</TableHeader>
                   <TableData>
-                    <FunctionHover fn={hook.setState} />
+                    <ObjectHover data={hook.setState} />
                   </TableData>
                 </Table>
               </Hook>

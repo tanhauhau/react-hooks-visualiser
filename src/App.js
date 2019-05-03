@@ -6,7 +6,7 @@ import SplitPane from 'react-split-pane';
 import styles from './App.module.scss';
 import Editor from './components/Editor';
 import EditorPanel from './components/EditorPanel';
-import { FunctionHoverProvider } from './components/Function';
+import { ObjectHoverProvider } from './components/ObjectHover';
 import Hooks from './components/Hooks';
 import Scope from './components/Scope';
 import Props from './components/Props';
@@ -113,7 +113,7 @@ function App() {
       </Container>
       <Container>
         {currentCodeState && currentCodeState.status === 'running' ? (
-          <FunctionHoverProvider>
+          <ObjectHoverProvider>
             <Header>
               <div>Component Name: {currentCodeState.componentName}</div>
             </Header>
@@ -150,7 +150,7 @@ function App() {
                 <div id="render-here" />
               </SplitPane>
             </Container>
-          </FunctionHoverProvider>
+          </ObjectHoverProvider>
         ) : null}
       </Container>
     </SplitPane>

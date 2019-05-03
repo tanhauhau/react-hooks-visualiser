@@ -1,10 +1,10 @@
 import React from 'react';
-import { FunctionHover } from './Function';
+import { ObjectHover } from './ObjectHover';
 
 export default function Data({ data }) {
   switch (typeof data) {
     case 'function':
-      return <FunctionHover fn={data} />;
+      return <ObjectHover data={data} />;
     default:
       return JSON.stringify(data);
   }
