@@ -49,7 +49,7 @@ export default class Hook {
   }
 
   addUseReducer(reducer, initialArg, init) {
-    this.hooksPointer++;
+    this.hookPointer++;
     if (this.hooks[this.hookPointer] !== undefined) {
       const { state, dispatch } = this.hooks[this.hookPointer];
       return [state, dispatch];
@@ -80,7 +80,9 @@ export default class Hook {
   updateReducerState(hookIndex, action) {
     const hook = this.hooks[hookIndex];
 
-    let nextState = hook.state.setValue(hook.reducer(hook.state.getValue(), action));
+    let nextState = hook.state.setValue(
+      hook.reducer(hook.state.getValue(), action)
+    );
 
     this.hooks[hookIndex] = {
       ...hook,

@@ -17,23 +17,22 @@ import useHistory from './utils/useHistory';
 
 const initialCode = `import { useState } from 'react';
 
+function reducer(state, action) {
+  if (action === 'increment') {
+    return state + 1;
+  } else if (action === 'decrement') {
+    return state - 1;
+  }
+  return state;
+}
+
 export default function MyCounter({ foo }) {
-  let b = foo;
-  const [count, setCount] = useState(0);
-  const [p, setP] = useState('dragon');
-  const [q, setQ] = useState(true);
-
-  const bar = 1;
-  const baz = '123';
-  const qux = true;
-  const quux = [1, '2', 3];
-  const corge = {a:1,b:2};
-
+  const [count, dispatch] = useReducer(reducer, 0);
   
   return (
     <div>
-      <button onClick={() => setCount(count + 1)}>Click</button>
-      <button onClick={() => setCount(count => count + 1)}>Click</button>
+      <button onClick={() => dispatch('increment')}>increment</button>
+      <button onClick={() => dispatch('decrement')}>decrement</button>
       <div>{count}</div>
     </div>
   )
@@ -75,8 +74,8 @@ function App() {
           endRow: end.line - 1,
           endCol: end.column,
           className: 'highlight-marker',
-          type: 'background'
-        }
+          type: 'background',
+        },
       ];
     }
     return [];
@@ -134,7 +133,7 @@ function App() {
                           dispatchCodeAction({
                             type: 'updateProps',
                             key,
-                            value
+                            value,
                           });
                         }}
                       />

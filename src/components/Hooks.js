@@ -37,32 +37,16 @@ export default function Hooks({ hook }) {
   const { hooks, hookPointer } = hook;
   return (
     <HooksContainer>
-      {hooks.map((hook, index) => {
-        switch (hook.type) {
-          case 'useState':
-            return (
-              <Hook
-                key={index}
-                showArrow={index > 0}
-                active={index === hookPointer}
-                name={hook.type}
-              >
-                <Table>
-                  <TableHeader>state</TableHeader>
-                  <TableData>
-                    <ObjectHover data={hook.state} />
-                  </TableData>
-                  <TableHeader>setState</TableHeader>
-                  <TableData>
-                    <ObjectHover data={hook.setState} />
-                  </TableData>
-                </Table>
-              </Hook>
-            );
-          default:
-            return null;
-        }
-      })}
+      {hooks.map((hook, index) => (
+        <Hook
+          key={index}
+          showArrow={index > 0}
+          active={index === hookPointer}
+          name={hook.type}
+        >
+          <HookData hook={hook} />
+        </Hook>
+      ))}
     </HooksContainer>
   );
 }
@@ -78,4 +62,41 @@ function Hook({ name, showArrow, active, children }) {
       </HookDiv>
     </>
   );
+}
+
+function HookData({ hook }) {
+  switch (hook.type) {
+    case 'useState':
+      return (
+        <Table>
+          <TableHeader>state</TableHeader>
+          <TableData>
+            <ObjectHover data={hook.state} />
+          </TableData>
+          <TableHeader>setState</TableHeader>
+          <TableData>
+            <ObjectHover data={hook.setState} />
+          </TableData>
+        </Table>
+      );
+    case 'useReducer':
+      return (
+        <Table>
+          <TableHeader>state</TableHeader>
+          <TableData>
+            <ObjectHover data={hook.state} />
+          </TableData>
+          <TableHeader>reducer</TableHeader>
+          <TableData>
+            <ObjectHover data={hook.reducer} />
+          </TableData>
+          <TableHeader>dispatch</TableHeader>
+          <TableData>
+            <ObjectHover data={hook.dispatch} />
+          </TableData>
+        </Table>
+      );
+    default:
+      return null;
+  }
 }

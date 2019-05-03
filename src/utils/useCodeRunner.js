@@ -63,6 +63,9 @@ function codeRunnerReducer(state: State, action): State {
           scope,
           hooks
         ));
+      } else {
+        hooks = hooks.clone();
+        hooks.hookPointer = -1;
       }
 
       return {
@@ -82,6 +85,9 @@ function codeRunnerReducer(state: State, action): State {
       switch (action.hookType) {
         case 'useState':
           newHook.updateSetState(action.hookIndex, action.data.value);
+          break;
+        case 'useReducer':
+          newHook.updateReducerState(action.hookIndex, action.data.action);
           break;
         default:
       }
@@ -128,16 +134,13 @@ function analyseCode(ast) {
     const componentName = getComponentName(componentFunction);
     const propNames = getProps(componentFunction);
     const statements = flattenStatements(componentFunction.body.body);
-    // const scope =
-    //   componentFunction.params[0] &&
-    //   componentFunction.params[0].type === 'ObjectPattern'
-    //     ? keysToObjects(propNames)
-    //     : {};
+    const scope = evalRestOfCodeIntoScope(ast);
+
     return {
       componentName,
       propNames,
       statements,
-      scope: {},
+      scope,
     };
   }
   return null;
@@ -176,6 +179,7 @@ function evalRestOfCodeIntoScope(ast) {
   );
   const scope = {};
   for (const otherCode of otherCodes) {
+    executeStatement(otherCode, scope, null);
   }
   return scope;
 }
@@ -256,9 +260,16 @@ function executeStatement(statement, nextScope, nextHook: Hook) {
         evaluateExpression(statement.argument, nextScope, nextHook).getValue(),
         document.querySelector('#render-here')
       );
-      nextHook.hookPointer = -1;
+      break;
+    case 'FunctionDeclaration':
+      nextScope[statement.id.name] = evaluateExpression(
+        statement,
+        nextScope,
+        nextHook
+      );
       break;
     default:
+      console.log(statement.type);
   }
   return { scope: nextScope, hooks: nextHook };
 }
@@ -305,6 +316,7 @@ function evaluateExpression(ast, scope, hook: Hook) {
       return scope[ast.name];
     case 'ArrowFunctionExpression':
     case 'FunctionExpression':
+    case 'FunctionDeclaration':
       return dangerousEvalWithScope(babel.generate(ast).code, scope);
     default:
   }
