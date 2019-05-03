@@ -46,6 +46,7 @@ export default function Hooks({ hook }) {
                 key={index}
                 showArrow={index > 0}
                 active={index === hookPointer}
+                name={hook.type}
               >
                 <Table>
                   <TableHeader>state</TableHeader>

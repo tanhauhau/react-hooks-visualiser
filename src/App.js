@@ -9,6 +9,7 @@ import EditorPanel from './components/EditorPanel';
 import { FunctionHoverProvider } from './components/Function';
 import Hooks from './components/Hooks';
 import Scope from './components/Scope';
+import Props from './components/Props';
 
 import useBabel from './utils/useBabel';
 import useCodeRunner from './utils/useCodeRunner';
@@ -41,6 +42,21 @@ const Container = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
+  background: white;
+`;
+const ScrollableContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: white;
+  overflow: scroll;
+`;
+
+const Header = styled.div`
+  text-align: center;
+  margin: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid gray;
 `;
 
 function App() {
@@ -98,19 +114,35 @@ function App() {
       <Container>
         {currentCodeState && currentCodeState.status === 'running' ? (
           <FunctionHoverProvider>
-            <div>
+            <Header>
               <div>Component Name: {currentCodeState.componentName}</div>
-              {currentCodeState.statementIndex === -1
-                ? 'Please fill in the props value and press next to render it'
-                : ''}
-            </div>
+            </Header>
             <Container>
               <SplitPane split="horizontal" defaultSize="70%">
                 <SplitPane split="vertical" defaultSize="50%">
-                  <div>
-                    Scope:
-                    <Scope scope={currentCodeState.scope} />
-                  </div>
+                  <SplitPane
+                    split="horizontal"
+                    defaultSize="50%"
+                    style={{ overflow: 'scroll' }}
+                  >
+                    <ScrollableContainer>
+                      <Header>Props</Header>
+                      <Props
+                        props={currentCodeState.props}
+                        onPropsChange={(key, value) => {
+                          dispatchCodeAction({
+                            type: 'updateProps',
+                            key,
+                            value
+                          });
+                        }}
+                      />
+                    </ScrollableContainer>
+                    <Container>
+                      <Header>Scope</Header>
+                      <Scope scope={currentCodeState.scope} />
+                    </Container>
+                  </SplitPane>
                   <div>
                     <Hooks hook={currentCodeState.hooks} />
                   </div>

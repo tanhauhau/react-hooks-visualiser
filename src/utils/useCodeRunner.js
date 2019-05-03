@@ -47,6 +47,14 @@ function codeRunnerReducer(state: State, action): State {
       let { scope, hooks } = state;
 
       if (nextStatementIndex > -1) {
+        // clone
+        scope = { ...scope };
+        hooks = hooks.clone();
+
+        if (nextStatementIndex === 0) {
+          Object.assign(scope, state.props);
+        }
+
         statementAt = nextStatement.statement.loc;
         ({ scope, hooks } = executeStatement(
           nextStatement.statement,
@@ -60,7 +68,11 @@ function codeRunnerReducer(state: State, action): State {
         statementIndex: nextStatementIndex,
         statementAt,
         scope,
-        hooks
+        hooks,
+
+        // componentDirty
+        isComponentDirty:
+          nextStatementIndex === 0 ? false : state.isComponentDirty
       };
     }
     case 'updateHook':
@@ -75,6 +87,15 @@ function codeRunnerReducer(state: State, action): State {
         ...state,
         isComponentDirty: true,
         hooks: newHook
+      };
+    case 'updateProps':
+      return {
+        ...state,
+        props: {
+          ...state.props,
+          [action.key]: action.value
+        },
+        isComponentDirty: true,
       };
     case 'reset':
       return initialState;
@@ -105,16 +126,16 @@ function analyseCode(ast) {
     const componentName = getComponentName(componentFunction);
     const propNames = getProps(componentFunction);
     const statements = flattenStatements(componentFunction.body.body);
-    const scope =
-      componentFunction.params[0] &&
-      componentFunction.params[0].type === 'ObjectPattern'
-        ? keysToObjects(propNames)
-        : {};
+    // const scope =
+    //   componentFunction.params[0] &&
+    //   componentFunction.params[0].type === 'ObjectPattern'
+    //     ? keysToObjects(propNames)
+    //     : {};
     return {
       componentName,
       propNames,
       statements,
-      scope
+      scope: {}
     };
   }
   return null;
@@ -204,9 +225,7 @@ function keysToObjects(keys) {
   return result;
 }
 
-function executeStatement(statement, scope, hooks: Hook) {
-  const nextScope = { ...scope };
-  const nextHook = hooks.clone();
+function executeStatement(statement, nextScope, nextHook: Hook) {
   console.log('statement', statement);
   switch (statement.type) {
     case 'VariableDeclarator': {
