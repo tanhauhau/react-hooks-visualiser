@@ -18,6 +18,7 @@ import useHistory from './utils/useHistory';
 const initialCode = `import { useState } from 'react';
 
 export default function MyCounter({ foo }) {
+  let b = foo;
   const [count, setCount] = useState(0);
   const [p, setP] = useState('dragon');
   const [q, setQ] = useState(true);

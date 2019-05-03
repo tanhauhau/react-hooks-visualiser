@@ -283,13 +283,19 @@ function evaluateExpression(ast, scope, hook: Hook) {
             init = evaluateExpression(ast.arguments[2], scope, hook);
           }
           return hook.addUseReducer(reducer, initialArg, init);
+        } else if (callee.startsWith('use')) {
+          alert(`${callee} not implemented`);
+          return [];
         }
-      } else {
-        return new ProxyObject(
-          dangerousEvalWithScope(babel.generate(ast).code, scope)
-        );
       }
-      return [];
+      return new ProxyObject(
+        dangerousEvalWithScope(babel.generate(ast).code, scope)
+      );
+    case 'Identifier':
+      return scope[ast.name];
+    case 'ArrowFunctionExpression':
+    case 'FunctionExpression':
+      return dangerousEvalWithScope(babel.generate(ast).code, scope);
     default:
   }
 }

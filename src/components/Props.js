@@ -30,6 +30,7 @@ function ContentEditable({ value, onChange }) {
   return (
     <div
       contentEditable={true}
+      suppressContentEditableWarning={true}
       onBlur={onInput}
       onKeyDown={e => {
         if (e.keyCode === 13) {
