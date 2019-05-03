@@ -6,9 +6,13 @@ import 'brace/theme/github';
 
 type PropTypes = {
   code: string,
-  onCodeChange: string => void,
+  onCodeChange: string => void
 };
-export default function Editor({ code, onCodeChange, marker }: PropTypes) {
+export default function Editor({
+  code,
+  onCodeChange,
+  ...props
+}: PropTypes) {
   return (
     <AceEditor
       mode="javascript"
@@ -21,7 +25,7 @@ export default function Editor({ code, onCodeChange, marker }: PropTypes) {
       showPrintMargin={false}
       editorProps={{ $blockScrolling: true }}
       setOptions={{ useWorker: false }}
-      markers={marker}
+      {...props}
       // onCursorChange={onCursorChange}
     />
   );

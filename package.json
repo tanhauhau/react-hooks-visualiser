@@ -13,6 +13,7 @@
     "react-ace": "^6.5.0",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.0",
+    "react-split-pane": "^0.1.87",
     "styled-components": "^4.2.0"
   },
   "scripts": {

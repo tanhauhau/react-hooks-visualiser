@@ -51,6 +51,7 @@ export default class Hook {
     const hook = new Hook();
     hook.hooks = [...this.hooks];
     hook.hookPointer = this.hookPointer;
+    hook.dispatch = this.dispatch;
     return hook;
   }
 }

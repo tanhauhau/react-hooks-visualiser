@@ -6,7 +6,7 @@ import * as babel from './babel';
 import Hook from './hook';
 type Location = {
   line: number,
-  column: number,
+  column: number
 };
 export type State = {|
   status: 'ready' | 'running' | 'pause',
@@ -15,22 +15,12 @@ export type State = {|
   scope: {},
   props: {},
   statementAt: ?{ start: Location, end: Location },
+  statementIndex: number,
+  statements: ReadOnlyArray<Object>,
+  isComponentDirty: boolean
 |};
 
-type Action =
-  | {|
-      type: 'start',
-      ast: Object,
-    |}
-  | {|
-      type: 'stop',
-    |}
-  | {|
-      type: 'pause',
-    |}
-  | {||};
-
-function codeRunnerReducer(state: State, action: Action): State {
+function codeRunnerReducer(state: State, action): State {
   switch (action.type) {
     case 'start': {
       const { componentName, propNames, statements, scope } = analyseCode(
@@ -43,7 +33,7 @@ function codeRunnerReducer(state: State, action: Action): State {
         props: keysToObjects(propNames),
         scope,
         statements,
-        statementIndex: -1,
+        statementIndex: -1
       };
     }
     case 'next': {
@@ -52,7 +42,6 @@ function codeRunnerReducer(state: State, action: Action): State {
           ? 0
           : state.statements[state.statementIndex].next;
       const nextStatement = state.statements[nextStatementIndex];
-      console.log('nextStatement', nextStatementIndex, nextStatement);
 
       let statementAt = null;
       let { scope, hooks } = state;
@@ -71,12 +60,11 @@ function codeRunnerReducer(state: State, action: Action): State {
         statementIndex: nextStatementIndex,
         statementAt,
         scope,
-        hooks,
+        hooks
       };
     }
     case 'updateHook':
       const newHook = state.hooks.clone();
-      console.log(action, action.hookType);
       switch (action.hookType) {
         case 'useState':
           newHook.updateSetState(action.hookIndex, action.data.value);
@@ -85,8 +73,11 @@ function codeRunnerReducer(state: State, action: Action): State {
       }
       return {
         ...state,
-        hooks: newHook,
+        isComponentDirty: true,
+        hooks: newHook
       };
+    case 'reset':
+      return initialState;
     default:
       return state;
   }
@@ -99,6 +90,7 @@ const initialState: State = {
   scope: {},
   props: {},
   statementAt: null,
+  isComponentDirty: false
 };
 
 export default function useCodeRunner(): [State, (Action) => void] {
@@ -122,7 +114,7 @@ function analyseCode(ast) {
       componentName,
       propNames,
       statements,
-      scope,
+      scope
     };
   }
   return null;
@@ -187,14 +179,14 @@ function flattenStatements(statements) {
         statement.declarations.forEach(declaration =>
           result.push({
             statement: declaration,
-            next: ++i,
+            next: ++i
           })
         );
         break;
       case 'ReturnStatement':
         result.push({
           statement,
-          next: -1, // end
+          next: -1 // end
         });
         break;
       // TODO: handle if else

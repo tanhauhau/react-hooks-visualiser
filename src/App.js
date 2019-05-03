@@ -1,11 +1,12 @@
 // @flow
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import styled from 'styled-components';
+import SplitPane from 'react-split-pane';
 import styles from './App.module.scss';
 import Editor from './components/Editor';
 import EditorPanel from './components/EditorPanel';
 import { FunctionHoverProvider } from './components/Function';
-import Data from './components/Data';
 import Hooks from './components/Hooks';
 import Scope from './components/Scope';
 
@@ -36,6 +37,12 @@ export default function MyCounter({ foo }) {
   )
 }`;
 
+const Container = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+`;
+
 function App() {
   const [code, ast, error, onCodeChange] = useBabel(initialCode);
   const [codeState, dispatchCodeAction] = useCodeRunner();
@@ -51,8 +58,8 @@ function App() {
           endRow: end.line - 1,
           endCol: end.column,
           className: 'highlight-marker',
-          type: 'background',
-        },
+          type: 'background'
+        }
       ];
     }
     return [];
@@ -61,35 +68,60 @@ function App() {
   console.log(ast);
 
   return (
-    <div className={styles.app}>
-      <div className={styles.leftPanel}>
+    <SplitPane split="vertical" defaultSize="50%">
+      <Container>
         <EditorPanel
           running={
             currentCodeState ? currentCodeState.status === 'running' : false
           }
+          nextText={
+            currentCodeState && currentCodeState.statementIndex === -1
+              ? 'Render'
+              : 'Next'
+          }
+          nextHint={
+            currentCodeState && currentCodeState.isComponentDirty === true
+              ? 'Scheduled a re-render'
+              : null
+          }
           onRun={() => dispatchCodeAction({ type: 'start', ast })}
           onNext={() => dispatchCodeAction({ type: 'next' })}
+          onReset={() => dispatchCodeAction({ type: 'reset' })}
         />
-        <Editor code={code} onCodeChange={onCodeChange} marker={marker} />
-      </div>
-      <div className={styles.rightPanel}>
+        <Editor
+          code={code}
+          onCodeChange={onCodeChange}
+          markers={marker}
+          readOnly={currentCodeState && currentCodeState.status === 'running'}
+        />
+      </Container>
+      <Container>
         {currentCodeState && currentCodeState.status === 'running' ? (
           <FunctionHoverProvider>
-            <div>Component Name: {currentCodeState.componentName}</div>
-            {currentCodeState.statementIndex === -1
-              ? 'Please fill in the props value and press next to render it'
-              : ''}
-
             <div>
-              Scope:
-              <Scope scope={currentCodeState.scope} />
+              <div>Component Name: {currentCodeState.componentName}</div>
+              {currentCodeState.statementIndex === -1
+                ? 'Please fill in the props value and press next to render it'
+                : ''}
             </div>
-            <Hooks hook={currentCodeState.hooks} />
+            <Container>
+              <SplitPane split="horizontal" defaultSize="70%">
+                <SplitPane split="vertical" defaultSize="50%">
+                  <div>
+                    Scope:
+                    <Scope scope={currentCodeState.scope} />
+                  </div>
+                  <div>
+                    <Hooks hook={currentCodeState.hooks} />
+                  </div>
+                </SplitPane>
+                <div id="render-here" />
+              </SplitPane>
+            </Container>
           </FunctionHoverProvider>
         ) : null}
-        <div id="render-here" />
-      </div>
-    </div>
+      </Container>
+    </SplitPane>
   );
 }
 

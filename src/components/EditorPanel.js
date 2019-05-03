@@ -21,13 +21,22 @@ const Button = styled.button`
 const Container = styled.div`
   padding: 8px 16px;
 `;
+const HintText = styled.span`
+  color: palevioletred;
+  font-size: 0.8em;
+  ::before {
+    content: '*'
+  }
+`;
 
 export default function EditorPanel({
   running,
   onRun,
   onStop,
   onReset,
-  onNext
+  onNext,
+  nextText,
+  nextHint
 }) {
   return (
     <Container>
@@ -37,7 +46,12 @@ export default function EditorPanel({
         <Button onClick={onRun}>{'Run'}</Button>
       )}
       <Button onClick={onReset}>{'Reset'}</Button>
-      {running && <Button onClick={onNext}>{'Next'}</Button>}
+      {running && (
+        <>
+          <Button onClick={onNext}>{nextText}</Button>
+          {nextHint && <HintText>{nextHint}</HintText>}
+        </>
+      )}
       {/* <Button>{'Prev'}</Button> */}
     </Container>
   );
