@@ -1,4 +1,5 @@
 // @flow
+import ProxyObject from './ProxyObject';
 
 export default class Hook {
   constructor() {
@@ -22,13 +23,13 @@ export default class Hook {
         type: 'updateHook',
         hookType: 'useState',
         hookIndex: this.hookPointer,
-        data: { value }
+        data: { value },
       });
     };
     this.hooks.push({
       type: 'useState',
       state,
-      setState
+      setState,
     });
     return [state, setState];
   }
@@ -43,7 +44,47 @@ export default class Hook {
     }
     this.hooks[hookIndex] = {
       ...hook,
-      state: nextState
+      state: nextState,
+    };
+  }
+
+  addUseReducer(reducer, initialArg, init) {
+    this.hooksPointer++;
+    if (this.hooks[this.hookPointer] !== undefined) {
+      const { state, dispatch } = this.hooks[this.hookPointer];
+      return [state, dispatch];
+    }
+
+    const state =
+      typeof init === 'function'
+        ? new ProxyObject(init(initialArg.getValue()))
+        : initialArg;
+
+    const dispatch = action => {
+      this.dispatch({
+        type: 'updateHook',
+        hookType: 'useReducer',
+        hookIndex: this.hookPointer,
+        data: { action },
+      });
+    };
+    this.hooks.push({
+      type: 'useReducer',
+      state,
+      dispatch,
+      reducer,
+    });
+    return [state, dispatch];
+  }
+
+  updateReducerState(hookIndex, action) {
+    const hook = this.hooks[hookIndex];
+
+    let nextState = hook.state.setValue(hook.reducer(hook.state.getValue(), action));
+
+    this.hooks[hookIndex] = {
+      ...hook,
+      state: nextState,
     };
   }
 

@@ -8,7 +8,7 @@ import ProxyObject from './ProxyObject';
 
 type Location = {
   line: number,
-  column: number
+  column: number,
 };
 export type State = {|
   status: 'ready' | 'running' | 'pause',
@@ -19,7 +19,7 @@ export type State = {|
   statementAt: ?{ start: Location, end: Location },
   statementIndex: number,
   statements: ReadOnlyArray<Object>,
-  isComponentDirty: boolean
+  isComponentDirty: boolean,
 |};
 
 function codeRunnerReducer(state: State, action): State {
@@ -35,7 +35,7 @@ function codeRunnerReducer(state: State, action): State {
         props: keysToObjects(propNames),
         scope,
         statements,
-        statementIndex: -1
+        statementIndex: -1,
       };
     }
     case 'next': {
@@ -74,7 +74,7 @@ function codeRunnerReducer(state: State, action): State {
 
         // componentDirty
         isComponentDirty:
-          nextStatementIndex === 0 ? false : state.isComponentDirty
+          nextStatementIndex === 0 ? false : state.isComponentDirty,
       };
     }
     case 'updateHook':
@@ -88,7 +88,7 @@ function codeRunnerReducer(state: State, action): State {
       return {
         ...state,
         isComponentDirty: true,
-        hooks: newHook
+        hooks: newHook,
       };
     case 'updateProps':
       return {
@@ -113,7 +113,7 @@ const initialState: State = {
   scope: {},
   props: {},
   statementAt: null,
-  isComponentDirty: false
+  isComponentDirty: false,
 };
 
 export default function useCodeRunner(): [State, (Action) => void] {
@@ -137,7 +137,7 @@ function analyseCode(ast) {
       componentName,
       propNames,
       statements,
-      scope: {}
+      scope: {},
     };
   }
   return null;
@@ -202,14 +202,14 @@ function flattenStatements(statements) {
         statement.declarations.forEach(declaration =>
           result.push({
             statement: declaration,
-            next: ++i
+            next: ++i,
           })
         );
         break;
       case 'ReturnStatement':
         result.push({
           statement,
-          next: -1 // end
+          next: -1, // end
         });
         break;
       // TODO: handle if else
@@ -260,18 +260,34 @@ function evaluateExpression(ast, scope, hook: Hook) {
     case 'BooleanLiteral':
     case 'ArrayExpression':
     case 'ObjectExpression':
-      return new ProxyObject(dangerousEvalWithScope(babel.generate(ast).code, scope));
+      return new ProxyObject(
+        dangerousEvalWithScope(babel.generate(ast).code, scope)
+      );
     case 'CallExpression':
       if (ast.callee.type === 'Identifier') {
-        if (ast.callee.name === 'useState') {
+        const callee = ast.callee.name;
+        if (callee === 'useState') {
           let initialState = undefined;
           if (ast.arguments.length > 0) {
             initialState = evaluateExpression(ast.arguments[0], scope, hook);
           }
           return hook.addUseState(initialState);
+        } else if (callee === 'useReducer') {
+          const reducer = evaluateExpression(ast.arguments[0], scope, hook);
+          let initialArg = undefined;
+          let init = undefined;
+          if (ast.arguments[1] !== undefined) {
+            initialArg = evaluateExpression(ast.arguments[1], scope, hook);
+          }
+          if (ast.arguments[2] !== undefined) {
+            init = evaluateExpression(ast.arguments[2], scope, hook);
+          }
+          return hook.addUseReducer(reducer, initialArg, init);
         }
       } else {
-        return new ProxyObject(dangerousEvalWithScope(babel.generate(ast).code, scope));
+        return new ProxyObject(
+          dangerousEvalWithScope(babel.generate(ast).code, scope)
+        );
       }
       return [];
     default:
