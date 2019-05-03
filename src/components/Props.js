@@ -22,7 +22,7 @@ export default function Props({ props, onPropsChange }) {
 
 function ContentEditable({ value, onChange }) {
   const onInput = e => {
-    const newValue = tryParse(e.target.innerHTML);
+    const newValue = tryParse(e.target.textContent);
     if (newValue !== value) {
       onChange(newValue);
     }
