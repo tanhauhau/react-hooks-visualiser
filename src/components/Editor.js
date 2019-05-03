@@ -26,7 +26,6 @@ export default function Editor({
       editorProps={{ $blockScrolling: true }}
       setOptions={{ useWorker: false }}
       {...props}
-      // onCursorChange={onCursorChange}
     />
   );
 }

@@ -32,7 +32,6 @@ const HintText = styled.span`
 export default function EditorPanel({
   running,
   onRun,
-  onStop,
   onReset,
   onNext,
   nextText,
@@ -41,18 +40,16 @@ export default function EditorPanel({
   return (
     <Container>
       {running ? (
-        <Button onClick={onStop}>{'Stop'}</Button>
+        <Button onClick={onReset}>{'Reset'}</Button>
       ) : (
         <Button onClick={onRun}>{'Run'}</Button>
       )}
-      <Button onClick={onReset}>{'Reset'}</Button>
       {running && (
         <>
           <Button onClick={onNext}>{nextText}</Button>
           {nextHint && <HintText>{nextHint}</HintText>}
         </>
       )}
-      {/* <Button>{'Prev'}</Button> */}
     </Container>
   );
 }
