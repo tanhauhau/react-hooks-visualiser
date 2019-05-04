@@ -115,6 +115,7 @@ function App() {
               ? 'Scheduled a re-render'
               : null
           }
+          disableRun={!!error}
           onRun={() => dispatchCodeAction({ type: 'start', ast })}
           onNext={() => dispatchCodeAction({ type: 'next' })}
           onReset={() => dispatchCodeAction({ type: 'reset' })}

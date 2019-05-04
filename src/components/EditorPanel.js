@@ -16,6 +16,13 @@ const Button = styled.button`
     background: palevioletred;
     color: white;
   }
+  
+  &[disabled] {
+    color: gray;
+    border-color: gray;
+    background: white;
+    cursor: not-allowed;
+  }
 `;
 
 const Container = styled.div`
@@ -30,6 +37,7 @@ const HintText = styled.span`
 `;
 
 export default function EditorPanel({
+  disableRun,
   running,
   onRun,
   onReset,
@@ -42,7 +50,7 @@ export default function EditorPanel({
       {running ? (
         <Button onClick={onReset}>{'Reset'}</Button>
       ) : (
-        <Button onClick={onRun}>{'Run'}</Button>
+        <Button onClick={onRun} disabled={disableRun}>{'Run'}</Button>
       )}
       {running && (
         <>
