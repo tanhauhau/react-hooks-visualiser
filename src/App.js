@@ -10,6 +10,7 @@ import { ObjectHoverProvider } from './components/ObjectHover';
 import Hooks from './components/Hooks';
 import Scope from './components/Scope';
 import Props from './components/Props';
+import History from './components/History';
 import { Tabs, Tab } from './components/Tab';
 
 import useBabel from './utils/useBabel';
@@ -65,7 +66,7 @@ const VerticalContainer = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-`
+`;
 const Header = styled.div`
   text-align: center;
   margin: 8px;
@@ -76,7 +77,7 @@ const Header = styled.div`
 function App() {
   const [code, ast, error, onCodeChange] = useBabel(initialCode);
   const [codeState, dispatchCodeAction] = useCodeRunner();
-  const [currentCodeState] = useHistory(codeState);
+  const [currentCodeState, codeStateHistory] = useHistory(codeState);
 
   const marker = useMemo(() => {
     if (currentCodeState && currentCodeState.statementAt) {
@@ -166,30 +167,7 @@ function App() {
                     <div id="render-here" />
                   </Tab>
                   <Tab name="Logs">
-                    <>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                      <div>Hello World</div>
-                    </>
+                    <History history={codeStateHistory} />
                   </Tab>
                 </Tabs>
               </SplitPane>

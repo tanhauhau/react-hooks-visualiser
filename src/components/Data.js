@@ -2,7 +2,7 @@ import ProxyObject from '../utils/ProxyObject';
 
 export default function Data({ data }) {
   if (typeof data === 'function') {
-    return `[[Function {${data.name}}]]`;
+    return `[[Function {${data.name || 'anonymous'}}]]`;
   }
   
   let rawData = data;

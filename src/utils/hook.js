@@ -11,10 +11,13 @@ export default class Hook {
     this.dispatch = dispatch;
   }
 
-  add_useState(initialState) {
+  add_useState(initialState, logs) {
     this.hookPointer++;
     if (this.hooks[this.hookPointer] !== undefined) {
       const { state, setState } = this.hooks[this.hookPointer];
+
+      logs.push({ type: 'hooks/useState', isInitial: false, state, setState });
+
       return [state, setState];
     }
     const state = initialState;
@@ -31,27 +34,49 @@ export default class Hook {
       state,
       setState,
     });
+
+    logs.push({ type: 'hooks/useState', isInitial: true, state, setState });
+
     return [state, setState];
   }
 
-  update_useState(hookIndex, { value: newValue }) {
+  update_useState(hookIndex, { value: newValue }, logs) {
     const hook = this.hooks[hookIndex];
     let nextState;
+    let oldValue = hook.state;
     if (typeof newValue === 'function') {
-      nextState = hook.state.setValue(newValue(hook.state.getValue()));
+      nextState = hook.state.setValue(newValue(oldValue.getValue()));
     } else {
       nextState = hook.state.setValue(newValue);
     }
+
+    logs.push({ type: 'update/useState', oldValue, newValue: nextState });
+
     this.hooks[hookIndex] = {
       ...hook,
       state: nextState,
     };
   }
 
-  add_useReducer(reducer, initialArg, init) {
+  add_useReducer(reducer) {
     this.hookPointer++;
+
+    // optional arguments
+    const initialArg = arguments.length > 2 ? arguments[1] : undefined;
+    const init = arguments.length > 3 ? arguments[2] : undefined;
+    // logs is always the last argument, because other args can be optional
+    const logs = arguments[arguments.length - 1];
+
     if (this.hooks[this.hookPointer] !== undefined) {
       const { state, dispatch } = this.hooks[this.hookPointer];
+
+      logs.push({
+        type: 'hooks/useReducer',
+        isInitial: false,
+        state,
+        dispatch,
+      });
+
       return [state, dispatch];
     }
 
@@ -74,15 +99,28 @@ export default class Hook {
       dispatch,
       reducer,
     });
+
+    logs.push({
+      type: 'hooks/useReducer',
+      isInitial: true,
+      state,
+      dispatch,
+      initialArg,
+      init,
+    });
+
     return [state, dispatch];
   }
 
-  update_useReducer(hookIndex, { action }) {
+  update_useReducer(hookIndex, { action }, logs) {
     const hook = this.hooks[hookIndex];
 
+    const oldState = hook.state;
     let nextState = hook.state.setValue(
-      hook.reducer(hook.state.getValue(), action)
+      hook.reducer(oldState.getValue(), action)
     );
+
+    logs.push({ type: 'update/useReducer', reducer: hook.reducer, action, oldState, nextState });
 
     this.hooks[hookIndex] = {
       ...hook,

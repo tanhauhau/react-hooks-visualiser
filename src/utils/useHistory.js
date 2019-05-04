@@ -58,5 +58,5 @@ export default function useHistory<T>(state: T): T {
   //   dispatchHistory
   // ]);
 
-  return [currentState]; // </T></T>, gotoHistory, clearHistory];
+  return [currentState, history.history]; // </T></T>, gotoHistory, clearHistory];
 }

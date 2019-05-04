@@ -47,6 +47,7 @@ function codeRunnerReducer(state: State, action): State {
 
       let statementAt = null;
       let { scope, hooks } = state;
+      let logs = [];
 
       if (nextStatementIndex > -1) {
         // clone
@@ -58,7 +59,7 @@ function codeRunnerReducer(state: State, action): State {
         }
 
         statementAt = nextStatement.statement.loc;
-        ({ scope, hooks } = executeStatement(
+        ({ scope, hooks, logs } = executeStatement(
           nextStatement.statement,
           scope,
           hooks
@@ -78,14 +79,18 @@ function codeRunnerReducer(state: State, action): State {
         // componentDirty
         isComponentDirty:
           nextStatementIndex === 0 ? false : state.isComponentDirty,
+
+        // logs
+        logs,
       };
     }
     case 'updateHook': {
+      const logs = [];
       const newHooks = state.hooks.clone();
       const method = `update_${action.hookType}`;
 
       if (typeof newHooks[method] === 'function') {
-        newHooks[method](action.hookIndex, action.data);
+        newHooks[method](action.hookIndex, action.data, logs);
       } else {
         alert(`${action.hookType} not implemented`);
       }
@@ -94,6 +99,7 @@ function codeRunnerReducer(state: State, action): State {
         ...state,
         isComponentDirty: true,
         hooks: newHooks,
+        logs,
       };
     }
     case 'updateProps':
@@ -243,38 +249,59 @@ function keysToObjects(keys) {
 
 function executeStatement(statement, nextScope, nextHook: Hook) {
   console.log('statement', statement);
+  const logs = [];
   switch (statement.type) {
     case 'VariableDeclarator': {
-      const value = evaluateExpression(statement.init, nextScope, nextHook);
+      const value = evaluateExpression(
+        statement.init,
+        nextScope,
+        nextHook,
+        logs
+      );
       if (statement.id.type === 'Identifier') {
         nextScope[statement.id.name] = value;
+
+        logs.push({ type: 'assignment', id: statement.id.name, value });
       } else if (statement.id.type === 'ArrayPattern') {
         statement.id.elements.forEach((identifier, index) => {
           nextScope[identifier.name] = value[index];
+
+          logs.push({
+            type: 'assignment',
+            id: identifier.name,
+            value: value[index],
+          });
         });
       }
       break;
     }
     case 'ReturnStatement':
       ReactDOM.render(
-        evaluateExpression(statement.argument, nextScope, nextHook).getValue(),
+        evaluateExpression(
+          statement.argument,
+          nextScope,
+          nextHook,
+          logs
+        ).getValue(),
         document.querySelector('#render-here')
       );
+      logs.push({ type: 'render' })
       break;
     case 'FunctionDeclaration':
       nextScope[statement.id.name] = evaluateExpression(
         statement,
         nextScope,
-        nextHook
+        nextHook,
+        logs
       );
       break;
     default:
       console.log(statement.type);
   }
-  return { scope: nextScope, hooks: nextHook };
+  return { scope: nextScope, hooks: nextHook, logs };
 }
 
-function evaluateExpression(ast, scope, hook: Hook) {
+function evaluateExpression(ast, scope, hook: Hook, logs) {
   switch (ast.type) {
     case 'NumericLiteral':
     case 'StringLiteral':
@@ -292,9 +319,9 @@ function evaluateExpression(ast, scope, hook: Hook) {
           const method = `add_${callee}`;
           if (typeof hook[method] === 'function') {
             const args = ast.arguments.map(argument =>
-              evaluateExpression(argument, scope, hook)
+              evaluateExpression(argument, scope, hook, logs)
             );
-            return hook[method](...args);
+            return hook[method](...args, logs);
           } else {
             alert(`${callee} not implemented`);
             return [];

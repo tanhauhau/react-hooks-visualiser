@@ -39,7 +39,6 @@ export function Tabs({ defaultTab, children }) {
   const tabs = children.map(child => child.props.name);
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]);
 
-  console.log('children', children);
   return (
     <TabsOuterContainer>
       <TabHeaderContainer>
