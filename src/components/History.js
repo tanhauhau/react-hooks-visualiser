@@ -66,6 +66,12 @@ const LOG_MAP = {
 
   'hooks/useReducer': LogHookUseReducer,
   'update/useReducer': LogUpdateUseReducer,
+
+  'hooks/useCallback': LogHookUseCallback,
+  'update/useCallback': LogUpdateUseCallback,
+
+  'hooks/useMemo': LogHookUseMemo,
+  'update/useMemo': LogUpdateUseMemo,
 };
 
 function Log({ log }) {
@@ -166,5 +172,111 @@ function LogUpdateUseReducer({ log }) {
       from calling reducer <ObjectHover data={log.reducer} /> with{' '}
       <ObjectHover data={log.oldState} /> and <ObjectHover data={log.action} />)
     </div>
+  );
+}
+
+function LogHookUseCallback({ log }) {
+  return (
+    <>
+      <div>
+        <HookBadge>useCallback</HookBadge>
+        Creating new <em>useCallback</em> hook, with deps{' '}
+        <Deps deps={log.deps} />
+      </div>
+      <div>
+        <HookBadge>useCallback</HookBadge>
+        Returning <ObjectHover data={log.callback} />
+      </div>
+    </>
+  );
+}
+
+function LogUpdateUseCallback({ log }) {
+  return (
+    <>
+      <div>
+        <HookBadge>useCallback</HookBadge>
+        Reusing <em>useCallback</em> hook
+      </div>
+      <div>
+        <HookBadge>useCallback</HookBadge>
+        Comparing <Deps deps={log.prevDeps} /> with <Deps deps={log.deps} />
+      </div>
+      {log.shouldUpdate && (
+        <div>
+          <HookBadge>useCallback</HookBadge>
+          Deps changed. Discarding <ObjectHover data={log.prevCallback} />
+        </div>
+      )}
+      <div>
+        <HookBadge>useCallback</HookBadge>
+        Returning <ObjectHover data={log.callback} />
+      </div>
+    </>
+  );
+}
+
+function LogHookUseMemo({ log }) {
+  return (
+    <>
+      <div>
+        <HookBadge>useMemo</HookBadge>
+        Creating new <em>useMemo</em> hook, with deps{' '}
+        <Deps deps={log.deps} />
+      </div>
+      <div>
+        <HookBadge>useMemo</HookBadge>
+        Called <ObjectHover data={log.memo} />
+      </div>
+      <div>
+        <HookBadge>useMemo</HookBadge>
+        Returning <ObjectHover data={log.memoised} />
+      </div>
+    </>
+  );
+}
+
+function LogUpdateUseMemo({ log }) {
+  return (
+    <>
+      <div>
+        <HookBadge>useMemo</HookBadge>
+        Reusing <em>useMemo</em> hook
+      </div>
+      <div>
+        <HookBadge>useMemo</HookBadge>
+        Comparing <Deps deps={log.prevDeps} /> with <Deps deps={log.deps} />
+      </div>
+      {log.shouldUpdate && (
+        <>
+          <div>
+            <HookBadge>useMemo</HookBadge>
+            Deps changed. Discarding <ObjectHover data={log.prevMemoised} />
+          </div>
+          <div>
+            <HookBadge>useMemo</HookBadge>
+            Called <ObjectHover data={log.memo} />
+          </div>
+        </>
+      )}
+      <div>
+        <HookBadge>useMemo</HookBadge>
+        Returning <ObjectHover data={log.memoised} />
+      </div>
+    </>
+  );
+}
+function Deps({ deps }) {
+  return (
+    <>
+      {'['}
+      {deps.map((dep, index) => (
+        <React.Fragment key={index}>
+          {index > 0 && ','}
+          <ObjectHover data={dep} />
+        </React.Fragment>
+      ))}
+      {']'}
+    </>
   );
 }

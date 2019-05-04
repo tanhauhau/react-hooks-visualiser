@@ -28,7 +28,7 @@ function codeRunnerReducer(state: State, action): State {
       const { componentName, propNames, statements, outerScope } = analyseCode(
         action.ast
       );
-      const scope = {...outerScope};
+      const scope = { ...outerScope };
       return {
         ...state,
         status: 'running',
@@ -69,7 +69,6 @@ function codeRunnerReducer(state: State, action): State {
         ));
 
         scopes = scopes.slice(0, -1).concat(scope);
-
       } else {
         scope = { ...outerScope };
         scopes = [...scopes, scope];
@@ -316,10 +315,13 @@ function evaluateExpression(ast, scope, hook: Hook, logs) {
     case 'NumericLiteral':
     case 'StringLiteral':
     case 'BooleanLiteral':
-    case 'ArrayExpression':
     case 'ObjectExpression':
       return new ProxyObject(
         dangerousEvalWithScope(babel.generate(ast).code, scope)
+      );
+    case 'ArrayExpression':
+      return ast.elements.map(element =>
+        evaluateExpression(element, scope, hook, logs)
       );
     case 'CallExpression':
       if (ast.callee.type === 'Identifier') {

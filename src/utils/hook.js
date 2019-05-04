@@ -128,6 +128,96 @@ export default class Hook {
     };
   }
 
+  add_useCallback(callback) {
+    this.hookPointer++;
+
+    // optional arguments
+    const deps = arguments.length > 2 ? arguments[1] : undefined;
+    // logs is always the last argument, because other args can be optional
+    const logs = arguments[arguments.length - 1];
+
+    if (this.hooks[this.hookPointer] !== undefined) {
+      const hook = this.hooks[this.hookPointer];
+      const { callback: prevCallback, deps: prevDeps } = hook;
+
+      let shouldUpdate = false;
+      for(let i=0; i<deps.length; i++) {
+        if (prevDeps[i] !== deps[i]) {
+          shouldUpdate = true;
+          break;
+        }
+      }
+
+      const newCallback = shouldUpdate ? callback : prevCallback;
+
+      logs.push({ type: 'update/useCallback', shouldUpdate, callback: newCallback, prevCallback, deps, prevDeps });
+
+      this.hooks[this.hookPointer] = {
+        ...hook,
+        callback: newCallback,
+        deps,
+      };
+
+      return newCallback;
+    }
+
+    this.hooks.push({
+      type: 'useCallback',
+      callback,
+      deps,
+    });
+
+    logs.push({ type: 'hooks/useCallback', callback, deps });
+
+    return callback;
+  }
+
+  add_useMemo(memo) {
+    this.hookPointer++;
+
+    // optional arguments
+    const deps = arguments.length > 2 ? arguments[1] : undefined;
+    // logs is always the last argument, because other args can be optional
+    const logs = arguments[arguments.length - 1];
+
+    if (this.hooks[this.hookPointer] !== undefined) {
+      const hook = this.hooks[this.hookPointer];
+      const { memoised: prevMemoised, deps: prevDeps } = hook;
+
+      let shouldUpdate = false;
+      for(let i=0; i<deps.length; i++) {
+        if (prevDeps[i] !== deps[i]) {
+          shouldUpdate = true;
+          break;
+        }
+      }
+
+      const newMemoised = shouldUpdate ? new ProxyObject(memo()) : prevMemoised;
+
+      logs.push({ type: 'update/useMemo', shouldUpdate, memoised: newMemoised, prevMemoised, deps, prevDeps, memo });
+
+      this.hooks[this.hookPointer] = {
+        ...hook,
+        memoised: newMemoised,
+        deps,
+      };
+
+      return newMemoised;
+    }
+
+    const memoised = new ProxyObject(memo());
+
+    this.hooks.push({
+      type: 'useMemo',
+      memoised,
+      deps,
+    });
+
+    logs.push({ type: 'hooks/useMemo', memoised, memo, deps });
+
+    return memoised;
+  }
+
   clone() {
     const hook = new Hook();
     hook.hooks = [...this.hooks];

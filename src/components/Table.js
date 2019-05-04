@@ -11,6 +11,7 @@ export const TableHeader = styled.div`
   grid-column: 1;
   justify-self: end;
   font-weight: 500;
+  margin-right: 4px;
 `;
 
 export const TableData = styled.div`

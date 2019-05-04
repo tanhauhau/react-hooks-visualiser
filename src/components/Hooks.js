@@ -38,60 +38,122 @@ export default function Hooks({ hook }) {
   return (
     <HooksContainer>
       {hooks.map((hook, index) => (
-        <Hook key={index} active={index === hookPointer} name={hook.type}>
-          <HookData hook={hook} />
-        </Hook>
+        <Hook key={index} active={index === hookPointer} hook={hook} />
       ))}
     </HooksContainer>
   );
 }
 
-function Hook({ name, active, children }) {
+function Hook({ hook, active, children }) {
   return (
     <>
       <HookArrow> ⇣ </HookArrow>
       <HookDiv>
         {active && <HookRightArrow>⇢</HookRightArrow>}
-        <HookTitleDiv>{name}</HookTitleDiv>
-        <HookBody>{children}</HookBody>
+        <HookTitleDiv>{hook.type}</HookTitleDiv>
+        <HookBody>
+          <HookData hook={hook} />
+        </HookBody>
       </HookDiv>
     </>
   );
 }
 
+const HOOK_DATA_MAP = {
+  useState: HookUseState,
+  useReducer: HookUseReducer,
+  useCallback: HookUseCallback,
+  useMemo: HookUseMemo,
+};
+
 function HookData({ hook }) {
-  switch (hook.type) {
-    case 'useState':
-      return (
-        <Table>
-          <TableHeader>state</TableHeader>
-          <TableData>
-            <ObjectHover data={hook.state} />
-          </TableData>
-          <TableHeader>setState</TableHeader>
-          <TableData>
-            <ObjectHover data={hook.setState} />
-          </TableData>
-        </Table>
-      );
-    case 'useReducer':
-      return (
-        <Table>
-          <TableHeader>state</TableHeader>
-          <TableData>
-            <ObjectHover data={hook.state} />
-          </TableData>
-          <TableHeader>reducer</TableHeader>
-          <TableData>
-            <ObjectHover data={hook.reducer} />
-          </TableData>
-          <TableHeader>dispatch</TableHeader>
-          <TableData>
-            <ObjectHover data={hook.dispatch} />
-          </TableData>
-        </Table>
-      );
-    default:
-      return null;
+  const HookDataComponent = HOOK_DATA_MAP[hook.type];
+  if (HookDataComponent) {
+    return <HookDataComponent hook={hook} />;
   }
+  return null;
+}
+
+function HookUseState({ hook }) {
+  return (
+    <Table>
+      <TableHeader>state</TableHeader>
+      <TableData>
+        <ObjectHover data={hook.state} />
+      </TableData>
+      <TableHeader>setState</TableHeader>
+      <TableData>
+        <ObjectHover data={hook.setState} />
+      </TableData>
+    </Table>
+  );
+}
+
+function HookUseReducer({ hook }) {
+  return (
+    <Table>
+      <TableHeader>state</TableHeader>
+      <TableData>
+        <ObjectHover data={hook.state} />
+      </TableData>
+      <TableHeader>reducer</TableHeader>
+      <TableData>
+        <ObjectHover data={hook.reducer} />
+      </TableData>
+      <TableHeader>dispatch</TableHeader>
+      <TableData>
+        <ObjectHover data={hook.dispatch} />
+      </TableData>
+    </Table>
+  );
+}
+
+function HookUseCallback({ hook }) {
+  const { callback, deps } = hook;
+  return (
+    <>
+      <Table>
+        <TableHeader>Callback</TableHeader>
+        <TableData>
+          <ObjectHover data={callback} />
+        </TableData>
+        <TableHeader>Deps</TableHeader>
+        <TableData>
+          {'['}
+          {deps.map((dep, index) => (
+            <>
+              {index > 0 ? ',' : null}
+              <ObjectHover data={dep} />
+            </>
+          ))}
+          {']'}
+        </TableData>
+      </Table>
+    </>
+  );
+}
+
+function HookUseMemo({ hook }) {
+  const { memoised, deps } = hook;
+  return (
+    <>
+      <Table>
+        <TableHeader>Memoised</TableHeader>
+        <TableData>
+          <ObjectHover data={memoised} />
+        </TableData>
+        <TableHeader>Deps</TableHeader>
+        <TableData>
+          {'['}
+          {deps.map((dep, index) => (
+            <>
+              {index > 0 ? ',' : null}
+              <ObjectHover data={dep} />
+            </>
+          ))}
+          {']'}
+        </TableData>
+      </Table>
+    </>
+  );
 }

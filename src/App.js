@@ -31,6 +31,8 @@ export default function MyCounter({ foo }) {
   const [a, dispatch] = useReducer(reducer, 0);
   const [b, setB] = useState(0);
   const result = a * b;
+  const increment = useCallback(() => setB(b+1), [setB, b]);
+  const result2 = useMemo(() => a * b, [a, b]);
   
   return (
     <div>
@@ -41,8 +43,11 @@ export default function MyCounter({ foo }) {
       <div>{'B: '}
       <button onClick={() => setB(b+1)}>increment</button>
       <button onClick={() => setB(b-1)}>decrement</button>
+
+      <button onClick={increment}>memoised increment callback</button>
       </div>
       <div>{a} * {b} = {result}</div>
+      <div>Memoised result = {result2}</div>
     </div>
   )
 }`;
@@ -71,6 +76,10 @@ const Header = styled.div`
   text-align: center;
   padding: 8px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
 `;
 
 function App() {
@@ -142,9 +151,7 @@ function App() {
                 <SplitPane split="vertical" defaultSize="50%">
                   <Tabs>
                     <Tab name="Scope">
-                      <Scope
-                        scopes={currentCodeState.scopes}
-                      />
+                      <Scope scopes={currentCodeState.scopes} />
                     </Tab>
                     <Tab name="Props">
                       <Props
@@ -159,10 +166,10 @@ function App() {
                       />
                     </Tab>
                   </Tabs>
-                  <div>
+                  <ScrollableContainer>
                     <Header>Hooks</Header>
                     <Hooks hook={currentCodeState.hooks} />
-                  </div>
+                  </ScrollableContainer>
                 </SplitPane>
                 <Tabs>
                   <Tab name="Logs">
