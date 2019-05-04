@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-
+const gray = 'rgba(0, 0, 0, 0.2)';
 const TabsOuterContainer = styled.div`
   position: relative;
   width: 100%;
@@ -26,13 +26,17 @@ const TabContainer = styled.div`
   transition: opacity 0.2s ease-in-out;
 `;
 const TabHeaderContainer = styled.div`
-  border-bottom: 1px solid gray;
+  border-bottom: 1px solid ${gray};
 `;
 const TabHeader = styled.div`
   display: inline-block;
   padding: 8px 16px;
   cursor: pointer;
   color: ${props => (props.active ? 'black' : 'gray')};
+`;
+const TabDivider = styled.span`
+  margin: 4px 0;
+  border-left: 1px solid ${gray};
 `;
 
 export function Tabs({ defaultTab, children }) {
@@ -42,14 +46,16 @@ export function Tabs({ defaultTab, children }) {
   return (
     <TabsOuterContainer>
       <TabHeaderContainer>
-        {tabs.map(tab => (
-          <TabHeader
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            active={tab === activeTab}
-          >
-            {tab}
-          </TabHeader>
+        {tabs.map((tab, index) => (
+          <React.Fragment key={tab}>
+            {index > 0 && <TabDivider />}
+            <TabHeader
+              onClick={() => setActiveTab(tab)}
+              active={tab === activeTab}
+            >
+              {tab}
+            </TabHeader>
+          </React.Fragment>
         ))}
       </TabHeaderContainer>
       <TabsContainer>

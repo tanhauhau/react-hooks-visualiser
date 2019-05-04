@@ -11,6 +11,7 @@ const Button = styled.button`
   padding: 0.25em 1em;
   cursor: pointer;
   outline: none;
+  user-select: none;
 
   :hover {
     background: palevioletred;

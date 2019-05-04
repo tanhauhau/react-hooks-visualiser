@@ -25,14 +25,17 @@ export type State = {|
 function codeRunnerReducer(state: State, action): State {
   switch (action.type) {
     case 'start': {
-      const { componentName, propNames, statements, scope } = analyseCode(
+      const { componentName, propNames, statements, outerScope } = analyseCode(
         action.ast
       );
+      const scope = {...outerScope};
       return {
         ...state,
         status: 'running',
         componentName,
         props: keysToObjects(propNames),
+        outerScope,
+        scopes: [scope],
         scope,
         statements,
         statementIndex: -1,
@@ -46,7 +49,7 @@ function codeRunnerReducer(state: State, action): State {
       const nextStatement = state.statements[nextStatementIndex];
 
       let statementAt = null;
-      let { scope, hooks } = state;
+      let { scopes, outerScope, scope, hooks } = state;
       let logs = [];
 
       if (nextStatementIndex > -1) {
@@ -64,7 +67,13 @@ function codeRunnerReducer(state: State, action): State {
           scope,
           hooks
         ));
+
+        scopes = scopes.slice(0, -1).concat(scope);
+
       } else {
+        scope = { ...outerScope };
+        scopes = [...scopes, scope];
+
         hooks = hooks.clone();
         hooks.hookPointer = -1;
       }
@@ -73,6 +82,7 @@ function codeRunnerReducer(state: State, action): State {
         ...state,
         statementIndex: nextStatementIndex,
         statementAt,
+        scopes,
         scope,
         hooks,
 
@@ -140,13 +150,13 @@ function analyseCode(ast) {
     const componentName = getComponentName(componentFunction);
     const propNames = getProps(componentFunction);
     const statements = flattenStatements(componentFunction.body.body);
-    const scope = evalRestOfCodeIntoScope(ast);
+    const outerScope = evalRestOfCodeIntoScope(ast);
 
     return {
       componentName,
       propNames,
       statements,
-      scope,
+      outerScope,
     };
   }
   return null;
@@ -285,7 +295,7 @@ function executeStatement(statement, nextScope, nextHook: Hook) {
         ).getValue(),
         document.querySelector('#render-here')
       );
-      logs.push({ type: 'render' })
+      logs.push({ type: 'render' });
       break;
     case 'FunctionDeclaration':
       nextScope[statement.id.name] = evaluateExpression(

@@ -1,5 +1,5 @@
 // @flow
-import { useReducer, useEffect } from 'react';
+import { useReducer, useEffect, useCallback } from 'react';
 
 type State<T> = {
   history: $ReadOnlyArray<T>,
@@ -54,9 +54,9 @@ export default function useHistory<T>(state: T): T {
   //   index => dispatchHistory({ type: 'goto', index }),
   //   [dispatchHistory]
   // );
-  // const clearHistory = useCallback(() => dispatchHistory({ type: 'clear' }), [
-  //   dispatchHistory
-  // ]);
+  const clearHistory = useCallback(() => dispatchHistory({ type: 'clear' }), [
+    dispatchHistory
+  ]);
 
-  return [currentState, history.history]; // </T></T>, gotoHistory, clearHistory];
+  return [currentState, history.history, clearHistory]; // </T></T>, gotoHistory, clearHistory];
 }

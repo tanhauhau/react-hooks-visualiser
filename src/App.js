@@ -69,15 +69,16 @@ const VerticalContainer = styled.div`
 `;
 const Header = styled.div`
   text-align: center;
-  margin: 8px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid gray;
+  padding: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 `;
 
 function App() {
   const [code, ast, error, onCodeChange] = useBabel(initialCode);
   const [codeState, dispatchCodeAction] = useCodeRunner();
-  const [currentCodeState, codeStateHistory] = useHistory(codeState);
+  const [currentCodeState, codeStateHistory, clearHistory] = useHistory(
+    codeState
+  );
 
   const marker = useMemo(() => {
     if (currentCodeState && currentCodeState.statementAt) {
@@ -118,7 +119,10 @@ function App() {
           disableRun={!!error}
           onRun={() => dispatchCodeAction({ type: 'start', ast })}
           onNext={() => dispatchCodeAction({ type: 'next' })}
-          onReset={() => dispatchCodeAction({ type: 'reset' })}
+          onReset={() => {
+            dispatchCodeAction({ type: 'reset' });
+            clearHistory();
+          }}
         />
         <Editor
           code={code}
@@ -134,15 +138,15 @@ function App() {
               <div>Component Name: {currentCodeState.componentName}</div>
             </Header>
             <Container>
-              <SplitPane split="horizontal" defaultSize="70%">
+              <SplitPane split="horizontal" defaultSize="60%">
                 <SplitPane split="vertical" defaultSize="50%">
-                  <SplitPane
-                    split="horizontal"
-                    defaultSize="50%"
-                    style={{ overflow: 'auto' }}
-                  >
-                    <ScrollableContainer>
-                      <Header>Props</Header>
+                  <Tabs>
+                    <Tab name="Scope">
+                      <Scope
+                        scopes={currentCodeState.scopes}
+                      />
+                    </Tab>
+                    <Tab name="Props">
                       <Props
                         props={currentCodeState.props}
                         onPropsChange={(key, value) => {
@@ -153,22 +157,19 @@ function App() {
                           });
                         }}
                       />
-                    </ScrollableContainer>
-                    <Container>
-                      <Header>Scope</Header>
-                      <Scope scope={currentCodeState.scope} />
-                    </Container>
-                  </SplitPane>
+                    </Tab>
+                  </Tabs>
                   <div>
+                    <Header>Hooks</Header>
                     <Hooks hook={currentCodeState.hooks} />
                   </div>
                 </SplitPane>
                 <Tabs>
-                  <Tab name="Output">
-                    <div id="render-here" />
-                  </Tab>
                   <Tab name="Logs">
                     <History history={codeStateHistory} />
+                  </Tab>
+                  <Tab name="Output">
+                    <div id="render-here" />
                   </Tab>
                 </Tabs>
               </SplitPane>

@@ -38,12 +38,7 @@ export default function Hooks({ hook }) {
   return (
     <HooksContainer>
       {hooks.map((hook, index) => (
-        <Hook
-          key={index}
-          showArrow={index > 0}
-          active={index === hookPointer}
-          name={hook.type}
-        >
+        <Hook key={index} active={index === hookPointer} name={hook.type}>
           <HookData hook={hook} />
         </Hook>
       ))}
@@ -51,10 +46,10 @@ export default function Hooks({ hook }) {
   );
 }
 
-function Hook({ name, showArrow, active, children }) {
+function Hook({ name, active, children }) {
   return (
     <>
-      {showArrow ? <HookArrow> ⇣ </HookArrow> : null}
+      <HookArrow> ⇣ </HookArrow>
       <HookDiv>
         {active && <HookRightArrow>⇢</HookRightArrow>}
         <HookTitleDiv>{name}</HookTitleDiv>
