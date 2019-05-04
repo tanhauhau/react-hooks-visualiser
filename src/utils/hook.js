@@ -11,7 +11,7 @@ export default class Hook {
     this.dispatch = dispatch;
   }
 
-  addUseState(initialState) {
+  add_useState(initialState) {
     this.hookPointer++;
     if (this.hooks[this.hookPointer] !== undefined) {
       const { state, setState } = this.hooks[this.hookPointer];
@@ -34,7 +34,7 @@ export default class Hook {
     return [state, setState];
   }
 
-  updateSetState(hookIndex, newValue) {
+  update_useState(hookIndex, { value: newValue }) {
     const hook = this.hooks[hookIndex];
     let nextState;
     if (typeof newValue === 'function') {
@@ -48,7 +48,7 @@ export default class Hook {
     };
   }
 
-  addUseReducer(reducer, initialArg, init) {
+  add_useReducer(reducer, initialArg, init) {
     this.hookPointer++;
     if (this.hooks[this.hookPointer] !== undefined) {
       const { state, dispatch } = this.hooks[this.hookPointer];
@@ -77,7 +77,7 @@ export default class Hook {
     return [state, dispatch];
   }
 
-  updateReducerState(hookIndex, action) {
+  update_useReducer(hookIndex, { action }) {
     const hook = this.hooks[hookIndex];
 
     let nextState = hook.state.setValue(

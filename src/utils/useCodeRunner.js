@@ -80,22 +80,22 @@ function codeRunnerReducer(state: State, action): State {
           nextStatementIndex === 0 ? false : state.isComponentDirty,
       };
     }
-    case 'updateHook':
-      const newHook = state.hooks.clone();
-      switch (action.hookType) {
-        case 'useState':
-          newHook.updateSetState(action.hookIndex, action.data.value);
-          break;
-        case 'useReducer':
-          newHook.updateReducerState(action.hookIndex, action.data.action);
-          break;
-        default:
+    case 'updateHook': {
+      const newHooks = state.hooks.clone();
+      const method = `update_${action.hookType}`;
+
+      if (typeof newHooks[method] === 'function') {
+        newHooks[method](action.hookIndex, action.data);
+      } else {
+        alert(`${action.hookType} not implemented`);
       }
+
       return {
         ...state,
         isComponentDirty: true,
-        hooks: newHook,
+        hooks: newHooks,
       };
+    }
     case 'updateProps':
       return {
         ...state,
@@ -287,26 +287,18 @@ function evaluateExpression(ast, scope, hook: Hook) {
     case 'CallExpression':
       if (ast.callee.type === 'Identifier') {
         const callee = ast.callee.name;
-        if (callee === 'useState') {
-          let initialState = undefined;
-          if (ast.arguments.length > 0) {
-            initialState = evaluateExpression(ast.arguments[0], scope, hook);
+
+        if (callee.startsWith('use')) {
+          const method = `add_${callee}`;
+          if (typeof hook[method] === 'function') {
+            const args = ast.arguments.map(argument =>
+              evaluateExpression(argument, scope, hook)
+            );
+            return hook[method](...args);
+          } else {
+            alert(`${callee} not implemented`);
+            return [];
           }
-          return hook.addUseState(initialState);
-        } else if (callee === 'useReducer') {
-          const reducer = evaluateExpression(ast.arguments[0], scope, hook);
-          let initialArg = undefined;
-          let init = undefined;
-          if (ast.arguments[1] !== undefined) {
-            initialArg = evaluateExpression(ast.arguments[1], scope, hook);
-          }
-          if (ast.arguments[2] !== undefined) {
-            init = evaluateExpression(ast.arguments[2], scope, hook);
-          }
-          return hook.addUseReducer(reducer, initialArg, init);
-        } else if (callee.startsWith('use')) {
-          alert(`${callee} not implemented`);
-          return [];
         }
       }
       return new ProxyObject(
@@ -317,6 +309,7 @@ function evaluateExpression(ast, scope, hook: Hook) {
     case 'ArrowFunctionExpression':
     case 'FunctionExpression':
     case 'FunctionDeclaration':
+    case 'BinaryExpression':
       return dangerousEvalWithScope(babel.generate(ast).code, scope);
     default:
   }
