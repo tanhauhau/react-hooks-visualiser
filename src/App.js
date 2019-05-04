@@ -10,13 +10,13 @@ import { ObjectHoverProvider } from './components/ObjectHover';
 import Hooks from './components/Hooks';
 import Scope from './components/Scope';
 import Props from './components/Props';
+import { Tabs, Tab } from './components/Tab';
 
 import useBabel from './utils/useBabel';
 import useCodeRunner from './utils/useCodeRunner';
 import useHistory from './utils/useHistory';
 
-const initialCode = `import { useState } from 'react';
-
+const initialCode = `
 function reducer(state, action) {
   if (action === 'increment') {
     return state + 1;
@@ -27,13 +27,21 @@ function reducer(state, action) {
 }
 
 export default function MyCounter({ foo }) {
-  const [count, dispatch] = useReducer(reducer, 0);
+  const [a, dispatch] = useReducer(reducer, 0);
+  const [b, setB] = useState(0);
+  const result = a * b;
   
   return (
     <div>
+      <div>{'A: '}
       <button onClick={() => dispatch('increment')}>increment</button>
       <button onClick={() => dispatch('decrement')}>decrement</button>
-      <div>{count}</div>
+      </div>
+      <div>{'B: '}
+      <button onClick={() => setB(b+1)}>increment</button>
+      <button onClick={() => setB(b-1)}>decrement</button>
+      </div>
+      <div>{a} * {b} = {result}</div>
     </div>
   )
 }`;
@@ -43,6 +51,7 @@ const Container = styled.div`
   width: 100%;
   height: 100%;
   background: white;
+  flex: 1;
 `;
 const ScrollableContainer = styled.div`
   position: relative;
@@ -51,7 +60,12 @@ const ScrollableContainer = styled.div`
   background: white;
   overflow: scroll;
 `;
-
+const VerticalContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+`
 const Header = styled.div`
   text-align: center;
   margin: 8px;
@@ -84,7 +98,7 @@ function App() {
   console.log(ast);
 
   return (
-    <SplitPane split="vertical" defaultSize="50%">
+    <SplitPane split="vertical" defaultSize="45%">
       <Container>
         <EditorPanel
           running={
@@ -111,7 +125,7 @@ function App() {
           readOnly={currentCodeState && currentCodeState.status === 'running'}
         />
       </Container>
-      <Container>
+      <VerticalContainer>
         {currentCodeState && currentCodeState.status === 'running' ? (
           <ObjectHoverProvider>
             <Header>
@@ -123,7 +137,7 @@ function App() {
                   <SplitPane
                     split="horizontal"
                     defaultSize="50%"
-                    style={{ overflow: 'scroll' }}
+                    style={{ overflow: 'auto' }}
                   >
                     <ScrollableContainer>
                       <Header>Props</Header>
@@ -147,12 +161,42 @@ function App() {
                     <Hooks hook={currentCodeState.hooks} />
                   </div>
                 </SplitPane>
-                <div id="render-here" />
+                <Tabs>
+                  <Tab name="Output">
+                    <div id="render-here" />
+                  </Tab>
+                  <Tab name="Logs">
+                    <>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                      <div>Hello World</div>
+                    </>
+                  </Tab>
+                </Tabs>
               </SplitPane>
             </Container>
           </ObjectHoverProvider>
         ) : null}
-      </Container>
+      </VerticalContainer>
     </SplitPane>
   );
 }
