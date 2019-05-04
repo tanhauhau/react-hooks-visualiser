@@ -1,8 +1,13 @@
 import ProxyObject from '../utils/ProxyObject';
+import ContextObject from '../utils/ContextObject';
 
 export default function Data({ data }) {
   if (typeof data === 'function') {
     return `Function{${data.name || 'anonymous'}}`;
+  }
+
+  if (data instanceof ContextObject) {
+    return `Context{${data.name}}`;
   }
 
   let rawData = data;

@@ -64,6 +64,7 @@ const HOOK_DATA_MAP = {
   useReducer: HookUseReducer,
   useCallback: HookUseCallback,
   useMemo: HookUseMemo,
+  useContext: HookUseContext,
 };
 
 function HookData({ hook }) {
@@ -111,49 +112,57 @@ function HookUseReducer({ hook }) {
 function HookUseCallback({ hook }) {
   const { callback, deps } = hook;
   return (
-    <>
-      <Table>
-        <TableHeader>Callback</TableHeader>
-        <TableData>
-          <ObjectHover data={callback} />
-        </TableData>
-        <TableHeader>Deps</TableHeader>
-        <TableData>
-          {'['}
-          {deps.map((dep, index) => (
-            <>
-              {index > 0 ? ',' : null}
-              <ObjectHover data={dep} />
-            </>
-          ))}
-          {']'}
-        </TableData>
-      </Table>
-    </>
+    <Table>
+      <TableHeader>Callback</TableHeader>
+      <TableData>
+        <ObjectHover data={callback} />
+      </TableData>
+      <TableHeader>Deps</TableHeader>
+      <TableData>
+        {'['}
+        {deps.map((dep, index) => (
+          <>
+            {index > 0 ? ',' : null}
+            <ObjectHover data={dep} />
+          </>
+        ))}
+        {']'}
+      </TableData>
+    </Table>
   );
 }
 
 function HookUseMemo({ hook }) {
   const { memoised, deps } = hook;
   return (
-    <>
-      <Table>
-        <TableHeader>Memoised</TableHeader>
-        <TableData>
-          <ObjectHover data={memoised} />
-        </TableData>
-        <TableHeader>Deps</TableHeader>
-        <TableData>
-          {'['}
-          {deps.map((dep, index) => (
-            <>
-              {index > 0 ? ',' : null}
-              <ObjectHover data={dep} />
-            </>
-          ))}
-          {']'}
-        </TableData>
-      </Table>
-    </>
+    <Table>
+      <TableHeader>Memoised</TableHeader>
+      <TableData>
+        <ObjectHover data={memoised} />
+      </TableData>
+      <TableHeader>Deps</TableHeader>
+      <TableData>
+        {'['}
+        {deps.map((dep, index) => (
+          <>
+            {index > 0 ? ',' : null}
+            <ObjectHover data={dep} />
+          </>
+        ))}
+        {']'}
+      </TableData>
+    </Table>
+  );
+}
+
+function HookUseContext({ hook }) {
+  const { context } = hook;
+  return (
+    <Table>
+      <TableHeader>Context</TableHeader>
+      <TableData>
+        <ObjectHover data={context} />
+      </TableData>
+    </Table>
   );
 }

@@ -10,6 +10,7 @@ import { ObjectHoverProvider } from './components/ObjectHover';
 import Hooks from './components/Hooks';
 import Scope from './components/Scope';
 import Props from './components/Props';
+import Context from './components/Context';
 import History from './components/History';
 import { Tabs, Tab } from './components/Tab';
 
@@ -26,11 +27,12 @@ function reducer(state, action) {
   }
   return state;
 }
-
+const cContext = React.createContext(10);
 export default function MyCounter({ foo }) {
+  const c = useContext(cContext);
   const [a, dispatch] = useReducer(reducer, 0);
   const [b, setB] = useState(0);
-  const result = a * b;
+  const result = a * b + c;
   const increment = useCallback(() => setB(b+1), [setB, b]);
   const result2 = useMemo(() => a * b, [a, b]);
   
@@ -159,6 +161,18 @@ function App() {
                         onPropsChange={(key, value) => {
                           dispatchCodeAction({
                             type: 'updateProps',
+                            key,
+                            value,
+                          });
+                        }}
+                      />
+                    </Tab>
+                    <Tab name="Context">
+                      <Context
+                        context={currentCodeState.context}
+                        onContextChange={(key, value) => {
+                          dispatchCodeAction({
+                            type: 'updateContext',
                             key,
                             value,
                           });

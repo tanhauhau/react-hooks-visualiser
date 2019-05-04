@@ -120,7 +120,13 @@ export default class Hook {
       hook.reducer(oldState.getValue(), action)
     );
 
-    logs.push({ type: 'update/useReducer', reducer: hook.reducer, action, oldState, nextState });
+    logs.push({
+      type: 'update/useReducer',
+      reducer: hook.reducer,
+      action,
+      oldState,
+      nextState,
+    });
 
     this.hooks[hookIndex] = {
       ...hook,
@@ -141,7 +147,7 @@ export default class Hook {
       const { callback: prevCallback, deps: prevDeps } = hook;
 
       let shouldUpdate = false;
-      for(let i=0; i<deps.length; i++) {
+      for (let i = 0; i < deps.length; i++) {
         if (prevDeps[i] !== deps[i]) {
           shouldUpdate = true;
           break;
@@ -150,7 +156,14 @@ export default class Hook {
 
       const newCallback = shouldUpdate ? callback : prevCallback;
 
-      logs.push({ type: 'update/useCallback', shouldUpdate, callback: newCallback, prevCallback, deps, prevDeps });
+      logs.push({
+        type: 'update/useCallback',
+        shouldUpdate,
+        callback: newCallback,
+        prevCallback,
+        deps,
+        prevDeps,
+      });
 
       this.hooks[this.hookPointer] = {
         ...hook,
@@ -185,7 +198,7 @@ export default class Hook {
       const { memoised: prevMemoised, deps: prevDeps } = hook;
 
       let shouldUpdate = false;
-      for(let i=0; i<deps.length; i++) {
+      for (let i = 0; i < deps.length; i++) {
         if (prevDeps[i] !== deps[i]) {
           shouldUpdate = true;
           break;
@@ -194,7 +207,15 @@ export default class Hook {
 
       const newMemoised = shouldUpdate ? new ProxyObject(memo()) : prevMemoised;
 
-      logs.push({ type: 'update/useMemo', shouldUpdate, memoised: newMemoised, prevMemoised, deps, prevDeps, memo });
+      logs.push({
+        type: 'update/useMemo',
+        shouldUpdate,
+        memoised: newMemoised,
+        prevMemoised,
+        deps,
+        prevDeps,
+        memo,
+      });
 
       this.hooks[this.hookPointer] = {
         ...hook,
@@ -216,6 +237,29 @@ export default class Hook {
     logs.push({ type: 'hooks/useMemo', memoised, memo, deps });
 
     return memoised;
+  }
+
+  add_useContext(context, logs) {
+    console.log('add_useContext', context);
+    this.hookPointer++;
+    if (this.hooks[this.hookPointer] !== undefined) {
+      logs.push({ type: 'update/useContext', context });
+
+      this.hooks[this.hookPointer] = {
+        ...this.hooks[this.hookPointer],
+        context,
+      }
+      return this.hooks[this.hookPointer].context.value;
+    }
+
+    this.hooks.push({
+      type: 'useContext',
+      context,
+    });
+
+    logs.push({ type: 'hooks/useContext', context });
+
+    return context.value;
   }
 
   clone() {

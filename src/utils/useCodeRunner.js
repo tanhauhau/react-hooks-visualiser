@@ -5,6 +5,8 @@ import ReactDOM from 'react-dom';
 import * as babel from './babel';
 import Hook from './hook';
 import ProxyObject from './ProxyObject';
+import ContextObject from './ContextObject';
+import { AST } from 'handlebars';
 
 type Location = {
   line: number,
@@ -16,6 +18,7 @@ export type State = {|
   hooks: Hook,
   scope: {},
   props: {},
+  context: {},
   statementAt: ?{ start: Location, end: Location },
   statementIndex: number,
   statements: ReadOnlyArray<Object>,
@@ -25,9 +28,13 @@ export type State = {|
 function codeRunnerReducer(state: State, action): State {
   switch (action.type) {
     case 'start': {
-      const { componentName, propNames, statements, outerScope } = analyseCode(
-        action.ast
-      );
+      const {
+        componentName,
+        propNames,
+        statements,
+        outerScope,
+        context,
+      } = analyseCode(action.ast);
       const scope = { ...outerScope };
       return {
         ...state,
@@ -37,6 +44,7 @@ function codeRunnerReducer(state: State, action): State {
         outerScope,
         scopes: [scope],
         scope,
+        context,
         statements,
         statementIndex: -1,
       };
@@ -49,23 +57,25 @@ function codeRunnerReducer(state: State, action): State {
       const nextStatement = state.statements[nextStatementIndex];
 
       let statementAt = null;
-      let { scopes, outerScope, scope, hooks } = state;
+      let { scopes, outerScope, scope, hooks, context } = state;
       let logs = [];
 
       if (nextStatementIndex > -1) {
         // clone
         scope = { ...scope };
         hooks = hooks.clone();
+        context = { ...context };
 
         if (nextStatementIndex === 0) {
           Object.assign(scope, state.props);
         }
 
         statementAt = nextStatement.statement.loc;
-        ({ scope, hooks, logs } = executeStatement(
+        ({ scope, hooks, logs, context } = executeStatement(
           nextStatement.statement,
           scope,
-          hooks
+          hooks,
+          context
         ));
 
         scopes = scopes.slice(0, -1).concat(scope);
@@ -84,6 +94,7 @@ function codeRunnerReducer(state: State, action): State {
         scopes,
         scope,
         hooks,
+        context,
 
         // componentDirty
         isComponentDirty:
@@ -119,6 +130,22 @@ function codeRunnerReducer(state: State, action): State {
           [action.key]: new ProxyObject(action.value),
         },
         isComponentDirty: true,
+        logs: [action],
+      };
+    case 'updateContext':
+      const newContext = state.context[action.key].setValue(action.value);
+      return {
+        ...state,
+        outerScope: {
+          ...state.outerScope,
+          [action.key]: newContext,
+        },
+        context: {
+          ...state.context,
+          [action.key]: newContext,
+        },
+        isComponentDirty: true,
+        logs: [{ ...action, context: newContext }],
       };
     case 'reset':
       return initialState;
@@ -133,6 +160,7 @@ const initialState: State = {
   hooks: new Hook(),
   scope: {},
   props: {},
+  context: {},
   statementAt: null,
   isComponentDirty: false,
 };
@@ -149,13 +177,14 @@ function analyseCode(ast) {
     const componentName = getComponentName(componentFunction);
     const propNames = getProps(componentFunction);
     const statements = flattenStatements(componentFunction.body.body);
-    const outerScope = evalRestOfCodeIntoScope(ast);
+    const { scope: outerScope, context } = evalRestOfCodeIntoScope(ast);
 
     return {
       componentName,
       propNames,
       statements,
       outerScope,
+      context,
     };
   }
   return null;
@@ -193,10 +222,11 @@ function evalRestOfCodeIntoScope(ast) {
     node => node.type !== 'ExportDefaultDeclaration'
   );
   const scope = {};
+  const context = {};
   for (const otherCode of otherCodes) {
-    executeStatement(otherCode, scope, null);
+    executeStatement(otherCode, scope, null, context);
   }
-  return scope;
+  return { scope, context };
 }
 
 // TODO: infer props via referenced object type
@@ -256,15 +286,25 @@ function keysToObjects(keys) {
   return result;
 }
 
-function executeStatement(statement, nextScope, nextHook: Hook) {
+function executeStatement(statement, nextScope, nextHook: Hook, nextContext) {
   console.log('statement', statement);
   const logs = [];
   switch (statement.type) {
+    case 'VariableDeclaration': {
+      statement.declarations.forEach(declaration =>
+        executeStatement(declaration, nextScope, nextHook, nextContext)
+      );
+      break;
+    }
     case 'VariableDeclarator': {
       const value = evaluateExpression(
         statement.init,
-        nextScope,
-        nextHook,
+        {
+          scope: nextScope,
+          hook: nextHook,
+          context: nextContext,
+          name: statement.id.name,
+        },
         logs
       );
       if (statement.id.type === 'Identifier') {
@@ -288,8 +328,7 @@ function executeStatement(statement, nextScope, nextHook: Hook) {
       ReactDOM.render(
         evaluateExpression(
           statement.argument,
-          nextScope,
-          nextHook,
+          { scope: nextScope, hook: nextHook, context: nextContext },
           logs
         ).getValue(),
         document.querySelector('#render-here')
@@ -299,18 +338,22 @@ function executeStatement(statement, nextScope, nextHook: Hook) {
     case 'FunctionDeclaration':
       nextScope[statement.id.name] = evaluateExpression(
         statement,
-        nextScope,
-        nextHook,
+        {
+          scope: nextScope,
+          hook: nextHook,
+          context: nextContext,
+          name: statement.id.name,
+        },
         logs
       );
       break;
     default:
       console.log(statement.type);
   }
-  return { scope: nextScope, hooks: nextHook, logs };
+  return { scope: nextScope, hooks: nextHook, context: nextContext, logs };
 }
 
-function evaluateExpression(ast, scope, hook: Hook, logs) {
+function evaluateExpression(ast, { scope, hook, context, name }, logs) {
   switch (ast.type) {
     case 'NumericLiteral':
     case 'StringLiteral':
@@ -321,7 +364,7 @@ function evaluateExpression(ast, scope, hook: Hook, logs) {
       );
     case 'ArrayExpression':
       return ast.elements.map(element =>
-        evaluateExpression(element, scope, hook, logs)
+        evaluateExpression(element, { scope, hook, context, name }, logs)
       );
     case 'CallExpression':
       if (ast.callee.type === 'Identifier') {
@@ -331,7 +374,7 @@ function evaluateExpression(ast, scope, hook: Hook, logs) {
           const method = `add_${callee}`;
           if (typeof hook[method] === 'function') {
             const args = ast.arguments.map(argument =>
-              evaluateExpression(argument, scope, hook, logs)
+              evaluateExpression(argument, { scope, hook, context, name }, logs)
             );
             return hook[method](...args, logs);
           } else {
@@ -339,17 +382,38 @@ function evaluateExpression(ast, scope, hook: Hook, logs) {
             return [];
           }
         }
+      } else if (ast.callee.type === 'MemberExpression') {
+        const obj = ast.callee.object.name;
+        const prop = ast.callee.property.name;
+        if (obj === 'React' && prop === 'createContext') {
+          let defaultValue = undefined;
+          if (ast.arguments.length > 0) {
+            defaultValue = evaluateExpression(
+              ast.arguments[0],
+              { scope, hook, context, name },
+              logs
+            );
+          }
+          context[name] = new ContextObject(name, defaultValue);
+          return context[name];
+        }
       }
       return new ProxyObject(
         dangerousEvalWithScope(babel.generate(ast).code, scope)
       );
     case 'Identifier':
       return scope[ast.name];
-    case 'ArrowFunctionExpression':
-    case 'FunctionExpression':
     case 'FunctionDeclaration':
     case 'BinaryExpression':
       return dangerousEvalWithScope(babel.generate(ast).code, scope);
+    case 'ArrowFunctionExpression':
+    case 'FunctionExpression': {
+      const fn = dangerousEvalWithScope(babel.generate(ast).code, scope);
+      if (!fn.name) {
+        return namedFunction(fn, name);
+      }
+      return fn;
+    }
     default:
   }
 }
@@ -371,4 +435,13 @@ function deproxy(obj) {
     }
     return result;
   }, {});
+}
+
+function namedFunction(fn, name) {
+  const fnObj = {
+    [name](...args) {
+      return fn(...args);
+    },
+  };
+  return fnObj[name];
 }

@@ -2,6 +2,7 @@ import React, { useContext, useReducer } from 'react';
 import styled from 'styled-components';
 import randomcolor from 'randomcolor';
 import ProxyObject from '../utils/ProxyObject';
+import ContextObject from '../utils/ContextObject';
 import Data from './Data';
 
 const DispatchContext = React.createContext();
@@ -75,5 +76,9 @@ export function ObjectHover({ data }) {
 }
 
 function isHoverable(data) {
-  return typeof data === 'function' || data instanceof ProxyObject;
+  return (
+    typeof data === 'function' ||
+    data instanceof ProxyObject ||
+    data instanceof ContextObject
+  );
 }

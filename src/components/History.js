@@ -60,6 +60,8 @@ const HookBadge = styled.div`
 const LOG_MAP = {
   assignment: LogAssignment,
   render: LogRender,
+  updateProps: LogProps,
+  updateContext: LogContext,
 
   'hooks/useState': LogHookUseState,
   'update/useState': LogUpdateUseState,
@@ -72,6 +74,9 @@ const LOG_MAP = {
 
   'hooks/useMemo': LogHookUseMemo,
   'update/useMemo': LogUpdateUseMemo,
+
+  'hooks/useContext': LogHookUseContext,
+  'update/useContext': LogUpdateUseContext,
 };
 
 function Log({ log }) {
@@ -102,6 +107,27 @@ function LogRender({ log }) {
         Reconcile
       </a>{' '}
       and render to DOM.
+    </div>
+  );
+}
+
+function LogProps({ log }) {
+  return (
+    <div>
+      <HookBadge>props</HookBadge>
+      Updated props {log.key} to <ObjectHover data={log.value} />. Schedule a
+      re-render.
+    </div>
+  );
+}
+
+function LogContext({ log }) {
+  console.log(log);
+  return (
+    <div>
+      <HookBadge>context</HookBadge>
+      Updated context value <ObjectHover data={log.context} />. Schedule a
+      re-render.
     </div>
   );
 }
@@ -221,8 +247,7 @@ function LogHookUseMemo({ log }) {
     <>
       <div>
         <HookBadge>useMemo</HookBadge>
-        Creating new <em>useMemo</em> hook, with deps{' '}
-        <Deps deps={log.deps} />
+        Creating new <em>useMemo</em> hook, with deps <Deps deps={log.deps} />
       </div>
       <div>
         <HookBadge>useMemo</HookBadge>
@@ -266,6 +291,7 @@ function LogUpdateUseMemo({ log }) {
     </>
   );
 }
+
 function Deps({ deps }) {
   return (
     <>
@@ -277,6 +303,36 @@ function Deps({ deps }) {
         </React.Fragment>
       ))}
       {']'}
+    </>
+  );
+}
+
+function LogHookUseContext({ log }) {
+  return (
+    <>
+      <div>
+        <HookBadge>useContext</HookBadge>
+        Creating new <em>useContext</em> hook
+      </div>
+      <div>
+        <HookBadge>useContext</HookBadge>
+        Return context value <ObjectHover data={log.context.value} />
+      </div>
+    </>
+  );
+}
+
+function LogUpdateUseContext({ log }) {
+  return (
+    <>
+      <div>
+        <HookBadge>useContext</HookBadge>
+        Reusing <em>useContext</em> hook
+      </div>
+      <div>
+        <HookBadge>useContext</HookBadge>
+        Return context value <ObjectHover data={log.context.value} />
+      </div>
     </>
   );
 }
