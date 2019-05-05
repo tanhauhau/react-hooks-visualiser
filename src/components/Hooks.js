@@ -7,6 +7,7 @@ const HooksContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-bottom: 12px;
 `;
 const HookDiv = styled.div`
   border: 1px solid forestgreen;
