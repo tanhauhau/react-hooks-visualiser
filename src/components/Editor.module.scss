@@ -1,9 +1,0 @@
-:local {
-  .readOnly.readOnly {
-    background: #f0f0f0;
-
-    &:global(.ace_focus .ace_marker-layer .ace_active-line) {
-      background: rgba(#a96078, 0.6);
-    }
-  }
-}
