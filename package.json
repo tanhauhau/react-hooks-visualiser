@@ -2,6 +2,7 @@
   "name": "react-hooks-visualiser",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://lihautan.com/react-hooks-visualiser",
   "dependencies": {
     "@babel/core": "^7.4.4",
     "@babel/generator": "^7.4.4",
