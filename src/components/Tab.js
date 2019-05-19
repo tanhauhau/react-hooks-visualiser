@@ -61,7 +61,7 @@ export function Tabs({ defaultTab, children }) {
       <TabsContainer>
         {children.map(child => {
           if (child.props.name === activeTab) {
-            return React.cloneElement(child, { active: true });
+            return React.cloneElement(child, { active: true, key: child.props.name });
           }
           return child;
         })}

@@ -8,6 +8,7 @@ import Editor from './components/Editor';
 import EditorPanel from './components/EditorPanel';
 import { ObjectHoverProvider } from './components/ObjectHover';
 import Hooks from './components/Hooks';
+import Effects from './components/Effect';
 import Scope from './components/Scope';
 import Props from './components/Props';
 import Context from './components/Context';
@@ -19,40 +20,60 @@ import useCodeRunner from './utils/useCodeRunner';
 import useHistory from './utils/useHistory';
 
 const initialCode = `
-function reducer(state, action) {
-  if (action === 'increment') {
-    return state + 1;
-  } else if (action === 'decrement') {
-    return state - 1;
-  }
-  return state;
-}
-const cContext = React.createContext(10);
 export default function MyCounter({ foo }) {
-  const c = useContext(cContext);
-  const [a, dispatch] = useReducer(reducer, 0);
   const [b, setB] = useState(0);
-  const result = a * b + c;
-  const increment = useCallback(() => setB(b+1), [setB, b]);
-  const result2 = useMemo(() => a * b, [a, b]);
-  
+  useEffect(() => {
+    console.log('-----------', b);
+    return () => {
+      console.log('cleanup', b);
+    };
+  }, [b]);
+
   return (
     <div>
-      <div>{'A: '}
-      <button onClick={() => dispatch('increment')}>increment</button>
-      <button onClick={() => dispatch('decrement')}>decrement</button>
-      </div>
-      <div>{'B: '}
+      { b }
       <button onClick={() => setB(b+1)}>increment</button>
       <button onClick={() => setB(b-1)}>decrement</button>
-
-      <button onClick={increment}>memoised increment callback</button>
-      </div>
-      <div>{a} * {b} = {result}</div>
-      <div>Memoised result = {result2}</div>
     </div>
   )
-}`;
+}
+`
+
+// `
+// function reducer(state, action) {
+//   if (action === 'increment') {
+//     return state + 1;
+//   } else if (action === 'decrement') {
+//     return state - 1;
+//   }
+//   return state;
+// }
+// const cContext = React.createContext(10);
+// export default function MyCounter({ foo }) {
+//   const c = useContext(cContext);
+//   const [a, dispatch] = useReducer(reducer, 0);
+//   const [b, setB] = useState(0);
+//   const result = a * b + c;
+//   const increment = useCallback(() => setB(b+1), [setB, b]);
+//   const result2 = useMemo(() => a * b, [a, b]);
+  
+//   return (
+//     <div>
+//       <div>{'A: '}
+//       <button onClick={() => dispatch('increment')}>increment</button>
+//       <button onClick={() => dispatch('decrement')}>decrement</button>
+//       </div>
+//       <div>{'B: '}
+//       <button onClick={() => setB(b+1)}>increment</button>
+//       <button onClick={() => setB(b-1)}>decrement</button>
+
+//       <button onClick={increment}>memoised increment callback</button>
+//       </div>
+//       <div>{a} * {b} = {result}</div>
+//       <div>Memoised result = {result2}</div>
+//     </div>
+//   )
+// }`;
 
 const Container = styled.div`
   position: relative;
@@ -107,8 +128,6 @@ function App() {
     }
     return [];
   }, [currentCodeState]);
-
-  console.log(ast);
 
   return (
     <SplitPane split="vertical" defaultSize="45%">
@@ -180,17 +199,23 @@ function App() {
                       />
                     </Tab>
                   </Tabs>
-                  <ScrollableContainer>
-                    <Header>Hooks</Header>
-                    <Hooks hook={currentCodeState.hooks} />
-                  </ScrollableContainer>
+                  <Tabs>
+                    <Tab name="Hooks">
+                      <Hooks hook={currentCodeState.hooks} />
+                    </Tab>
+                    <Tab name="Effects">
+                      <Effects effects={currentCodeState.hooks.effects} />
+                    </Tab>
+                  </Tabs>
                 </SplitPane>
                 <Tabs>
                   <Tab name="Logs">
                     <History history={codeStateHistory} />
                   </Tab>
                   <Tab name="Output">
-                    <div id="render-here" />
+                    <div id="render-here">
+                      {currentCodeState.output}
+                    </div>
                   </Tab>
                 </Tabs>
               </SplitPane>

@@ -47,7 +47,7 @@ function HistoryItem({ item }) {
   return (
     <Item>
       <Logs logs={item.logs} />
-      {item.statementIndex === -1
+      {item.statementIndex < 0
         ? item.isComponentDirty
           ? `${item.componentName} has been scheduled for a re-render`
           : `${item.componentName} is ready to be rendered`
@@ -94,6 +94,10 @@ const LOG_MAP = {
 
   'hooks/useContext': LogHookUseContext,
   'update/useContext': LogUpdateUseContext,
+
+  'hooks/useEffect': LogHookUseEffect,
+  'update/useEffect': LogHookUpdateEffect,
+  'effect/flush': LogFlushEffect,
 };
 
 function Log({ log }) {
@@ -348,6 +352,73 @@ function LogUpdateUseContext({ log }) {
       <div>
         <HookBadge>useContext</HookBadge>
         Return context value <ObjectHover data={log.context.value} />
+      </div>
+    </>
+  );
+}
+
+function LogHookUseEffect({ log }) {
+  return (
+    <>
+      <div>
+        <HookBadge>useEffect</HookBadge>
+        Creating new <em>useEffect</em> hook, with deps <Deps deps={log.deps} />
+      </div>
+      <div>
+        <HookBadge>useEffect</HookBadge>
+        Scheduled <ObjectHover data={log.callback} /> after component has
+        mounted.
+      </div>
+    </>
+  );
+}
+
+function LogHookUpdateEffect({ log }) {
+  return (
+    <>
+      <div>
+        <HookBadge>useEffect</HookBadge>
+        Comparing <Deps deps={log.prevDeps} /> with <Deps deps={log.deps} />
+      </div>
+      {log.shouldUpdate ? (
+        <>
+          <div>
+            <HookBadge>useEffect</HookBadge>
+            Deps changed.
+          </div>
+          <div>
+            <HookBadge>useEffect</HookBadge>
+            Scheduled{' '}
+            {log.prevDestructure && (
+              <>
+                cleanup <ObjectHover data={log.prevDestructure} /> then{' '}
+              </>
+            )}
+            <ObjectHover data={log.callback} /> after component has updated.
+          </div>
+        </>
+      ) : (
+        <div>
+          <HookBadge>useEffect</HookBadge>
+          No changed.
+        </div>
+      )}
+    </>
+  );
+}
+
+function LogFlushEffect({ log }) {
+  return (
+    <>
+      {log.prevCleanup && (
+        <div>
+          <HookBadge>useEffect</HookBadge>
+          Execute cleanup: <ObjectHover data={log.prevCleanup} />
+        </div>
+      )}
+      <div>
+        <HookBadge>useEffect</HookBadge>
+        Execute effect: <ObjectHover data={log.effect.callback} />
       </div>
     </>
   );

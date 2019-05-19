@@ -57,7 +57,7 @@ function codeRunnerReducer(state: State, action): State {
       const nextStatement = state.statements[nextStatementIndex];
 
       let statementAt = null;
-      let { scopes, outerScope, scope, hooks, context } = state;
+      let { scopes, outerScope, scope, hooks, context, output } = state;
       let logs = [];
 
       if (nextStatementIndex > -1) {
@@ -71,11 +71,12 @@ function codeRunnerReducer(state: State, action): State {
         }
 
         statementAt = nextStatement.statement.loc;
-        ({ scope, hooks, logs, context } = executeStatement(
+        ({ scope, hooks, logs, context, output } = executeStatement(
           nextStatement.statement,
           scope,
           hooks,
-          context
+          context,
+          output,
         ));
 
         scopes = scopes.slice(0, -1).concat(scope);
@@ -84,6 +85,22 @@ function codeRunnerReducer(state: State, action): State {
         scopes = [...scopes, scope];
 
         hooks = hooks.clone();
+        for (const effect of hooks.effects) {
+          const prevCleanup = hooks.hooks[effect.pointer].destructure;
+          if (prevCleanup) {
+            // cleanup
+            prevCleanup();
+          }
+          const cleanupFn = effect.callback();
+          logs.push({
+            type: 'effect/flush',
+            effect,
+            prevCleanup,
+          });
+
+          hooks.hooks[effect.pointer].destructure = cleanupFn;
+        }
+        hooks.effects = [];
         hooks.hookPointer = -1;
       }
 
@@ -95,6 +112,7 @@ function codeRunnerReducer(state: State, action): State {
         scope,
         hooks,
         context,
+        output,
 
         // componentDirty
         isComponentDirty:
@@ -163,6 +181,7 @@ const initialState: State = {
   context: {},
   statementAt: null,
   isComponentDirty: false,
+  output: null,
 };
 
 export default function useCodeRunner(): [State, (Action) => void] {
@@ -271,6 +290,12 @@ function flattenStatements(statements) {
           next: -1, // end
         });
         break;
+      case 'ExpressionStatement':
+        result.push({
+          statement,
+          next: ++i,
+        });
+        break;
       // TODO: handle if else
       default:
     }
@@ -286,8 +311,13 @@ function keysToObjects(keys) {
   return result;
 }
 
-function executeStatement(statement, nextScope, nextHook: Hook, nextContext) {
-  console.log('statement', statement);
+function executeStatement(
+  statement,
+  nextScope,
+  nextHook: Hook,
+  nextContext,
+  nextOutput
+) {
   const logs = [];
   switch (statement.type) {
     case 'VariableDeclaration': {
@@ -325,14 +355,12 @@ function executeStatement(statement, nextScope, nextHook: Hook, nextContext) {
       break;
     }
     case 'ReturnStatement':
-      ReactDOM.render(
-        evaluateExpression(
-          statement.argument,
-          { scope: nextScope, hook: nextHook, context: nextContext },
-          logs
-        ).getValue(),
-        document.querySelector('#render-here')
-      );
+      nextOutput = evaluateExpression(
+        statement.argument,
+        { scope: nextScope, hook: nextHook, context: nextContext },
+        logs
+      ).getValue();
+
       logs.push({ type: 'render' });
       break;
     case 'FunctionDeclaration':
@@ -347,10 +375,22 @@ function executeStatement(statement, nextScope, nextHook: Hook, nextContext) {
         logs
       );
       break;
+    case 'ExpressionStatement': {
+      evaluateExpression(
+        statement.expression,
+        {
+          scope: nextScope,
+          hook: nextHook,
+          context: nextContext,
+        },
+        logs
+      );
+      break;
+    }
     default:
-      console.log(statement.type);
+      console.warn(statement.type);
   }
-  return { scope: nextScope, hooks: nextHook, context: nextContext, logs };
+  return { scope: nextScope, hooks: nextHook, context: nextContext, output: nextOutput, logs };
 }
 
 function evaluateExpression(ast, { scope, hook, context, name }, logs) {

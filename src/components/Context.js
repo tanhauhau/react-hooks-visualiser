@@ -3,7 +3,6 @@ import { Table, TableHeader, TableData } from './Table';
 import { ObjectHover } from './ObjectHover';
 
 export default function Context({ context, onContextChange }) {
-  console.log(context);
   return (
     <Table>
       {Object.keys(context).map(key => (

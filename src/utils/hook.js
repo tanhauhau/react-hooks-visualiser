@@ -4,6 +4,7 @@ import ProxyObject from './ProxyObject';
 export default class Hook {
   constructor() {
     this.hooks = [];
+    this.effects = [];
     this.hookPointer = -1;
   }
 
@@ -248,7 +249,7 @@ export default class Hook {
       this.hooks[this.hookPointer] = {
         ...this.hooks[this.hookPointer],
         context,
-      }
+      };
       return this.hooks[this.hookPointer].context.value;
     }
 
@@ -262,11 +263,67 @@ export default class Hook {
     return context.value;
   }
 
+  add_useEffect(callback) {
+    // optional arguments
+    const deps = arguments.length > 2 ? arguments[1] : undefined;
+    // logs is always the last argument, because other args can be optional
+    const logs = arguments[arguments.length - 1];
+
+    this.hookPointer++;
+    if (this.hooks[this.hookPointer] !== undefined) {
+      const hook = this.hooks[this.hookPointer];
+      const { deps: prevDeps, destructure: prevDestructure } = hook;
+
+      let shouldUpdate = false;
+      for (let i = 0; i < deps.length; i++) {
+        if (prevDeps[i] !== deps[i]) {
+          shouldUpdate = true;
+          break;
+        }
+      }
+
+      logs.push({
+        type: 'update/useEffect',
+        callback,
+        deps,
+        prevDeps,
+        shouldUpdate,
+        prevDestructure,
+      });
+
+      if (shouldUpdate) {
+        this.hooks[this.hookPointer] = {
+          ...this.hooks[this.hookPointer],
+          callback,
+          deps,
+        };
+        this.effects.push({
+          callback,
+          pointer: this.hookPointer,
+        });
+      }
+      return;
+    }
+
+    this.hooks.push({
+      type: 'useEffect',
+      callback,
+      deps,
+    });
+    this.effects.push({
+      callback,
+      pointer: this.hookPointer,
+    });
+
+    logs.push({ type: 'hooks/useEffect', callback, deps });
+  }
+
   clone() {
     const hook = new Hook();
     hook.hooks = [...this.hooks];
     hook.hookPointer = this.hookPointer;
     hook.dispatch = this.dispatch;
+    hook.effects = [...this.effects];
     return hook;
   }
 }

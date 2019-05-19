@@ -66,6 +66,7 @@ const HOOK_DATA_MAP = {
   useCallback: HookUseCallback,
   useMemo: HookUseMemo,
   useContext: HookUseContext,
+  useEffect: HookUseEffect,
 };
 
 function HookData({ hook }) {
@@ -122,10 +123,10 @@ function HookUseCallback({ hook }) {
       <TableData>
         {'['}
         {deps.map((dep, index) => (
-          <>
+          <React.Fragment key={index}>
             {index > 0 ? ',' : null}
             <ObjectHover data={dep} />
-          </>
+          </React.Fragment>
         ))}
         {']'}
       </TableData>
@@ -145,10 +146,10 @@ function HookUseMemo({ hook }) {
       <TableData>
         {'['}
         {deps.map((dep, index) => (
-          <>
+          <React.Fragment key={index}>
             {index > 0 ? ',' : null}
             <ObjectHover data={dep} />
-          </>
+          </React.Fragment>
         ))}
         {']'}
       </TableData>
@@ -163,6 +164,33 @@ function HookUseContext({ hook }) {
       <TableHeader>Context</TableHeader>
       <TableData>
         <ObjectHover data={context} />
+      </TableData>
+    </Table>
+  );
+}
+
+function HookUseEffect({ hook }) {
+  const { callback, deps, destructure } = hook;
+  return (
+    <Table>
+      <TableHeader>Callback</TableHeader>
+      <TableData>
+        <ObjectHover data={callback} />
+      </TableData>
+      <TableHeader>Deps</TableHeader>
+      <TableData>
+        {'['}
+        {deps.map((dep, index) => (
+          <React.Fragment key={index}>
+            {index > 0 ? ',' : null}
+            <ObjectHover data={dep} />
+          </React.Fragment>
+        ))}
+        {']'}
+      </TableData>
+      <TableHeader>Cleanup</TableHeader>
+      <TableData>
+        <ObjectHover data={destructure} />
       </TableData>
     </Table>
   );
