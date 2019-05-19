@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { ObjectHover } from './ObjectHover';
 
 export default function History({ history }) {
+  const ref = useRef();
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.scrollTo(0, ref.current.scrollHeight);
+    }
+  }, [history]);
+
   if (!history) {
     return null;
   }
-  return history.map((item, index) => <HistoryItem key={index} item={item} />);
+
+  return (
+    <div
+      style={{ width: '100%', height: '100%', overflow: 'scroll' }}
+      ref={ref}
+    >
+      {history.map((item, index) => (
+        <HistoryItem key={index} item={item} />
+      ))}
+    </div>
+  );
 }
 
 const Item = styled.div`
@@ -122,7 +139,6 @@ function LogProps({ log }) {
 }
 
 function LogContext({ log }) {
-  console.log(log);
   return (
     <div>
       <HookBadge>context</HookBadge>
