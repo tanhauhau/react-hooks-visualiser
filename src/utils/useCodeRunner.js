@@ -26,149 +26,177 @@ export type State = {|
 |};
 
 function codeRunnerReducer(state: State, action): State {
-  switch (action.type) {
-    case 'start': {
-      const {
-        componentName,
-        propNames,
-        statements,
-        outerScope,
-        context,
-      } = analyseCode(action.ast);
-      const scope = { ...outerScope };
-      return {
-        ...state,
-        status: 'running',
-        componentName,
-        props: keysToObjects(propNames),
-        outerScope,
-        scopes: [scope],
-        scope,
-        context,
-        statements,
-        statementIndex: -1,
-      };
-    }
-    case 'next': {
-      const nextStatementIndex =
-        state.statementIndex === -1
-          ? 0
-          : state.statements[state.statementIndex].next;
-      const nextStatement = state.statements[nextStatementIndex];
+  try {
+    switch (action.type) {
+      case 'start': {
+        const {
+          componentName,
+          propNames,
+          statements,
+          outerScope,
+          context,
+        } = analyseCode(action.ast);
+        const scope = { ...outerScope };
+        return {
+          ...state,
+          status: 'running',
+          componentName,
+          props: keysToObjects(propNames),
+          outerScope,
+          scopes: [scope],
+          scope,
+          context,
+          statements,
+          statementIndex: -1,
+        };
+      }
+      case 'next': {
+        const nextStatementIndex =
+          state.statementIndex === -1
+            ? 0
+            : typeof state.ifResult === 'boolean'
+            ? state.ifResult
+              ? state.statements[state.statementIndex].consequent
+              : state.statements[state.statementIndex].alternate
+            : state.statements[state.statementIndex].next;
+        const nextStatement = state.statements[nextStatementIndex];
 
-      let statementAt = null;
-      let { scopes, outerScope, scope, hooks, context, output } = state;
-      let logs = [];
-
-      if (nextStatementIndex > -1) {
-        // clone
-        scope = { ...scope };
-        hooks = hooks.clone();
-        context = { ...context };
-
-        if (nextStatementIndex === 0) {
-          Object.assign(scope, state.props);
-        }
-
-        statementAt = nextStatement.statement.loc;
-        ({ scope, hooks, logs, context, output } = executeStatement(
-          nextStatement.statement,
+        let statementAt = null;
+        let {
+          scopes,
+          outerScope,
           scope,
           hooks,
           context,
           output,
-        ));
+          ifResult,
+        } = state;
+        let logs = [];
 
-        scopes = scopes.slice(0, -1).concat(scope);
-      } else {
-        scope = { ...outerScope };
-        scopes = [...scopes, scope];
+        if (nextStatementIndex > -1) {
+          try {
+            // clone
+            scope = { ...scope };
+            hooks = hooks.clone();
+            context = { ...context };
 
-        hooks = hooks.clone();
-        for (const effect of hooks.effects) {
-          const prevCleanup = hooks.hooks[effect.pointer].destructure;
-          if (prevCleanup) {
-            // cleanup
-            prevCleanup();
+            if (nextStatementIndex === 0) {
+              Object.assign(scope, state.props);
+            }
+
+            statementAt = nextStatement.statement.loc;
+            ({
+              scope,
+              hooks,
+              logs,
+              context,
+              output,
+              ifResult,
+            } = executeStatement({
+              statement: nextStatement.statement,
+              scope,
+              hooks,
+              context,
+              output,
+            }));
+
+            scopes = scopes.slice(0, -1).concat(scope);
+          } catch (error) {
+            logs.push({ type: 'error', error });
           }
-          const cleanupFn = effect.callback();
-          logs.push({
-            type: 'effect/flush',
-            effect,
-            prevCleanup,
-          });
+        } else {
+          scope = { ...outerScope };
+          scopes = [...scopes, scope];
 
-          hooks.hooks[effect.pointer].destructure = cleanupFn;
+          hooks = hooks.clone();
+          for (const effect of hooks.effects) {
+            const prevCleanup = hooks.hooks[effect.pointer].destructure;
+            if (prevCleanup) {
+              // cleanup
+              prevCleanup();
+            }
+            const cleanupFn = effect.callback();
+            logs.push({
+              type: 'effect/flush',
+              effect,
+              prevCleanup,
+            });
+
+            hooks.hooks[effect.pointer].destructure = cleanupFn;
+          }
+          hooks.effects = [];
+          hooks.hookPointer = -1;
         }
-        hooks.effects = [];
-        hooks.hookPointer = -1;
+
+        return {
+          ...state,
+          statementIndex: nextStatementIndex,
+          statementAt,
+          scopes,
+          scope,
+          hooks,
+          context,
+          output,
+          ifResult,
+
+          // componentDirty
+          isComponentDirty:
+            nextStatementIndex === 0 ? false : state.isComponentDirty,
+
+          // logs
+          logs,
+        };
       }
+      case 'updateHook': {
+        const logs = [];
+        const newHooks = state.hooks.clone();
+        const method = `update_${action.hookType}`;
 
-      return {
-        ...state,
-        statementIndex: nextStatementIndex,
-        statementAt,
-        scopes,
-        scope,
-        hooks,
-        context,
-        output,
+        if (typeof newHooks[method] === 'function') {
+          newHooks[method](action.hookIndex, action.data, logs);
+        } else {
+          alert(`${action.hookType} not implemented`);
+        }
 
-        // componentDirty
-        isComponentDirty:
-          nextStatementIndex === 0 ? false : state.isComponentDirty,
-
-        // logs
-        logs,
-      };
-    }
-    case 'updateHook': {
-      const logs = [];
-      const newHooks = state.hooks.clone();
-      const method = `update_${action.hookType}`;
-
-      if (typeof newHooks[method] === 'function') {
-        newHooks[method](action.hookIndex, action.data, logs);
-      } else {
-        alert(`${action.hookType} not implemented`);
+        return {
+          ...state,
+          isComponentDirty: true,
+          hooks: newHooks,
+          logs,
+        };
       }
-
-      return {
-        ...state,
-        isComponentDirty: true,
-        hooks: newHooks,
-        logs,
-      };
+      case 'updateProps':
+        return {
+          ...state,
+          props: {
+            ...state.props,
+            [action.key]: new ProxyObject(action.value),
+          },
+          isComponentDirty: true,
+          logs: [action],
+        };
+      case 'updateContext':
+        const newContext = state.context[action.key].setValue(action.value);
+        return {
+          ...state,
+          outerScope: {
+            ...state.outerScope,
+            [action.key]: newContext,
+          },
+          context: {
+            ...state.context,
+            [action.key]: newContext,
+          },
+          isComponentDirty: true,
+          logs: [{ ...action, context: newContext }],
+        };
+      case 'reset':
+        return initialState;
+      default:
+        return state;
     }
-    case 'updateProps':
-      return {
-        ...state,
-        props: {
-          ...state.props,
-          [action.key]: new ProxyObject(action.value),
-        },
-        isComponentDirty: true,
-        logs: [action],
-      };
-    case 'updateContext':
-      const newContext = state.context[action.key].setValue(action.value);
-      return {
-        ...state,
-        outerScope: {
-          ...state.outerScope,
-          [action.key]: newContext,
-        },
-        context: {
-          ...state.context,
-          [action.key]: newContext,
-        },
-        isComponentDirty: true,
-        logs: [{ ...action, context: newContext }],
-      };
-    case 'reset':
-      return initialState;
-    default:
-      return state;
+  } catch (error) {
+    return { ...state, logs: [...state.logs, { type: 'error', error }] };
   }
 }
 
@@ -243,7 +271,12 @@ function evalRestOfCodeIntoScope(ast) {
   const scope = {};
   const context = {};
   for (const otherCode of otherCodes) {
-    executeStatement(otherCode, scope, null, context);
+    executeStatement({
+      statement: otherCode,
+      scope,
+      hooks: null,
+      context,
+    });
   }
   return { scope, context };
 }
@@ -296,11 +329,50 @@ function flattenStatements(statements) {
           next: ++i,
         });
         break;
+      case 'IfStatement': {
+        const ifStatement = {
+          statement,
+          next: ++i,
+        };
+        const consequent = flattenStatements(
+          normalizeBlock(statement.consequent)
+        );
+        const alternate = flattenStatements(
+          normalizeBlock(statement.alternate)
+        );
+
+        result.push(ifStatement);
+        ifStatement.consequent = result.length;
+        for (const s of consequent) {
+          result.push({
+            statement: s.statement,
+            next: i + s.next,
+          });
+        }
+        result[result.length - 1].next += alternate.length;
+
+        ifStatement.alternate = i = result.length;
+        for (const s of alternate) {
+          result.push({
+            statement: s.statement,
+            next: i + s.next,
+          });
+        }
+        i = result.length;
+        break;
+      }
       // TODO: handle if else
       default:
     }
   }
   return result;
+}
+
+function normalizeBlock(node) {
+  if (node.type === 'BlockStatement') {
+    return node.body;
+  }
+  return [node];
 }
 
 function keysToObjects(keys) {
@@ -311,18 +383,24 @@ function keysToObjects(keys) {
   return result;
 }
 
-function executeStatement(
+function executeStatement({
   statement,
-  nextScope,
-  nextHook: Hook,
-  nextContext,
-  nextOutput
-) {
+  scope: nextScope,
+  hooks: nextHook,
+  context: nextContext,
+  output: nextOutput,
+}) {
   const logs = [];
+  let ifResult = undefined;
   switch (statement.type) {
     case 'VariableDeclaration': {
       statement.declarations.forEach(declaration =>
-        executeStatement(declaration, nextScope, nextHook, nextContext)
+        executeStatement({
+          statement: declaration,
+          scope: nextScope,
+          hooks: nextHook,
+          context: nextContext,
+        })
       );
       break;
     }
@@ -387,10 +465,31 @@ function executeStatement(
       );
       break;
     }
+    case 'IfStatement': {
+      const testResult = evaluateExpression(
+        statement.test,
+        {
+          scope: nextScope,
+          hook: nextHook,
+          context: nextContext,
+        },
+        logs
+      );
+      ifResult = !!testResult.data;
+      logs.push({ type: 'if', ifResult });
+      break;
+    }
     default:
       console.warn(statement.type);
   }
-  return { scope: nextScope, hooks: nextHook, context: nextContext, output: nextOutput, logs };
+  return {
+    scope: nextScope,
+    hooks: nextHook,
+    context: nextContext,
+    output: nextOutput,
+    ifResult,
+    logs,
+  };
 }
 
 function evaluateExpression(ast, { scope, hook, context, name }, logs) {
@@ -449,7 +548,7 @@ function evaluateExpression(ast, { scope, hook, context, name }, logs) {
     case 'ArrowFunctionExpression':
     case 'FunctionExpression': {
       const fn = dangerousEvalWithScope(babel.generate(ast).code, scope);
-      if (!fn.name) {
+      if (!fn.name && name) {
         return namedFunction(fn, name);
       }
       return fn;

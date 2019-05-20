@@ -21,7 +21,11 @@ import useHistory from './utils/useHistory';
 
 const initialCode = `
 export default function MyCounter({ foo }) {
-  const [b, setB] = useState(0);
+  if (foo) {
+    const [b, setB] = useState(0);
+  } else {
+    const d = 1;
+  }
   useEffect(() => {
     console.log('-----------', b);
     return () => {

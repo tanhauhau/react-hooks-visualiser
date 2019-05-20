@@ -15,6 +15,8 @@ export default class Hook {
   add_useState(initialState, logs) {
     this.hookPointer++;
     if (this.hooks[this.hookPointer] !== undefined) {
+      this.expectHook('useState');
+
       const { state, setState } = this.hooks[this.hookPointer];
 
       logs.push({ type: 'hooks/useState', isInitial: false, state, setState });
@@ -69,6 +71,8 @@ export default class Hook {
     const logs = arguments[arguments.length - 1];
 
     if (this.hooks[this.hookPointer] !== undefined) {
+      this.expectHook('useReducer');
+
       const { state, dispatch } = this.hooks[this.hookPointer];
 
       logs.push({
@@ -144,6 +148,8 @@ export default class Hook {
     const logs = arguments[arguments.length - 1];
 
     if (this.hooks[this.hookPointer] !== undefined) {
+      this.expectHook('useCallback');
+
       const hook = this.hooks[this.hookPointer];
       const { callback: prevCallback, deps: prevDeps } = hook;
 
@@ -195,6 +201,8 @@ export default class Hook {
     const logs = arguments[arguments.length - 1];
 
     if (this.hooks[this.hookPointer] !== undefined) {
+      this.expectHook('useMemo');
+
       const hook = this.hooks[this.hookPointer];
       const { memoised: prevMemoised, deps: prevDeps } = hook;
 
@@ -241,9 +249,10 @@ export default class Hook {
   }
 
   add_useContext(context, logs) {
-    console.log('add_useContext', context);
     this.hookPointer++;
     if (this.hooks[this.hookPointer] !== undefined) {
+      this.expectHook('useContext');
+
       logs.push({ type: 'update/useContext', context });
 
       this.hooks[this.hookPointer] = {
@@ -271,6 +280,8 @@ export default class Hook {
 
     this.hookPointer++;
     if (this.hooks[this.hookPointer] !== undefined) {
+      this.expectHook('useEffect');
+
       const hook = this.hooks[this.hookPointer];
       const { deps: prevDeps, destructure: prevDestructure } = hook;
 
@@ -325,5 +336,14 @@ export default class Hook {
     hook.dispatch = this.dispatch;
     hook.effects = [...this.effects];
     return hook;
+  }
+
+  expectHook(hookName) {
+    const currentHookName = this.hooks[this.hookPointer].type;
+    if (currentHookName !== hookName) {
+      throw new Error(
+        `Expecting "${hookName}", however encountered "${currentHookName}"`
+      );
+    }
   }
 }

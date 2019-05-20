@@ -73,8 +73,20 @@ const HookBadge = styled.div`
   font-size: 0.8em;
   margin-right: 4px;
 `;
+const Badge = styled.div`
+  display: inline-block;
+  border-radius: 4px;
+  color: white;
+  background-color: ${props => props.color};
+  padding: 1px 4px;
+  font-weight: 500;
+  font-size: 0.8em;
+  margin-right: 4px;
+`;
 
 const LOG_MAP = {
+  error: LogError,
+  if: LogIf,
   assignment: LogAssignment,
   render: LogRender,
   updateProps: LogProps,
@@ -106,6 +118,24 @@ function Log({ log }) {
     return <LogComponent log={log} />;
   }
   return null;
+}
+
+function LogError({ log }) {
+  return (
+    <div>
+      <Badge color="red">Error</Badge>
+      {String(log.error)}
+    </div>
+  );
+}
+
+function LogIf({ log }) {
+  return (
+    <div>
+      <Badge color="violet">If</Badge>
+      Testing If Condition
+    </div>
+  );
 }
 
 function LogAssignment({ log }) {
