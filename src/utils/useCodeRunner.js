@@ -1,12 +1,10 @@
 // @flow
 /* eslint-disable no-new-func, no-loop-func */
 import React, { useReducer } from 'react';
-import ReactDOM from 'react-dom';
 import * as babel from './babel';
 import Hook from './hook';
 import ProxyObject from './ProxyObject';
 import ContextObject from './ContextObject';
-import { AST } from 'handlebars';
 
 type Location = {
   line: number,
