@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/react-hooks-visualiser/static/css/main.10c25449.chunk.css",
-    "main.js": "/react-hooks-visualiser/static/js/main.5309d01f.chunk.js",
-    "main.js.map": "/react-hooks-visualiser/static/js/main.5309d01f.chunk.js.map",
+    "main.css": "/react-hooks-visualiser/static/css/main.a86a2b18.chunk.css",
+    "main.js": "/react-hooks-visualiser/static/js/main.37590ea1.chunk.js",
+    "main.js.map": "/react-hooks-visualiser/static/js/main.37590ea1.chunk.js.map",
     "runtime~main.js": "/react-hooks-visualiser/static/js/runtime~main.17241f1a.js",
     "runtime~main.js.map": "/react-hooks-visualiser/static/js/runtime~main.17241f1a.js.map",
-    "static/js/2.86e5ba57.chunk.js": "/react-hooks-visualiser/static/js/2.86e5ba57.chunk.js",
-    "static/js/2.86e5ba57.chunk.js.map": "/react-hooks-visualiser/static/js/2.86e5ba57.chunk.js.map",
+    "static/js/2.1ec2af0d.chunk.js": "/react-hooks-visualiser/static/js/2.1ec2af0d.chunk.js",
+    "static/js/2.1ec2af0d.chunk.js.map": "/react-hooks-visualiser/static/js/2.1ec2af0d.chunk.js.map",
     "index.html": "/react-hooks-visualiser/index.html",
-    "precache-manifest.820336158ded5bdb4f6135749cb07644.js": "/react-hooks-visualiser/precache-manifest.820336158ded5bdb4f6135749cb07644.js",
+    "precache-manifest.1ef80efef95e7378f95bb1341c98209a.js": "/react-hooks-visualiser/precache-manifest.1ef80efef95e7378f95bb1341c98209a.js",
     "service-worker.js": "/react-hooks-visualiser/service-worker.js",
-    "static/css/main.10c25449.chunk.css.map": "/react-hooks-visualiser/static/css/main.10c25449.chunk.css.map"
+    "static/css/main.a86a2b18.chunk.css.map": "/react-hooks-visualiser/static/css/main.a86a2b18.chunk.css.map"
   }
 }
