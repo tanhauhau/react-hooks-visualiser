@@ -18,6 +18,8 @@ import useBabel from './utils/useBabel';
 import useCodeRunner from './utils/useCodeRunner';
 import useHistory from './utils/useHistory';
 
+import './App.module.scss';
+
 const { code: initialCode = '' } = parseQueryParams();
 
 const Container = styled.div`
@@ -173,7 +175,7 @@ function useQueryParams(code) {
 
 function parseQueryParams() {
   return window.location.hash
-    .substring(1)
+    .replace(/^#\??/, '')
     .split('&')
     .map(part => part.split('='))
     .reduce((result, parts) => {
